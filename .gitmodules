@@ -1,0 +1,6 @@
+[submodule "godot_headers"]
+	path = godot_headers
+	url = https://github.com/GodotNativeTools/godot_headers.git
+[submodule "godot_markdown/thirdparty/cmark-gfm"]
+	path = godot_markdown/thirdparty/cmark-gfm
+	url = https://github.com/github/cmark-gfm.git
