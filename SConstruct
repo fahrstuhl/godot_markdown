@@ -65,19 +65,29 @@ elif env['platform'] == "windows":
     # This makes sure to keep the session environment variables on windows,
     # that way you can run scons in a vs 2017 prompt and it will find all the required tools
     env.Append(ENV = os.environ)
-
-    env.Append(CCFLAGS = ['-DWIN32', '-D_WIN32', '-D_WINDOWS', '-W3', '-GR', '-D_CRT_SECURE_NO_WARNINGS'])
-    env.Append(LIBS=['Advapi32'])
+    env['CC'] = 'x86_64-w64-mingw32-gcc'
+    env['CXX'] = 'x86_64-w64-mingw32-gcc'
+    env.Append(CCFLAGS = ['-DWIN32', '-D_WIN32', '-D_WINDOWS', '-D_CRT_SECURE_NO_WARNINGS'])
+    env.Append(LIBS=['advapi32'])
     if env['target'] in ('debug', 'd'):
-        env.Append(CCFLAGS = ['-EHsc', '-D_DEBUG', '-MDd'])
+        env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c11'])
+        # env.Append(CCFLAGS = ['-EHsc', '-D_DEBUG', '-MDd'])
     else:
-        env.Append(CCFLAGS = ['-O2', '-EHsc', '-DNDEBUG', '-MD'])
+        env.Append(CCFLAGS = ['-fPIC', '-g','-O3', '-std=c11'])
+        # env.Append(CCFLAGS = ['-O2', '-EHsc', '-DNDEBUG', '-MD'])
 
 elif env['platform'] == "android":
     platform = "android"
     arch = env['arch']
-    env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang"
-    env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang++"
+    if arch == "armv7a":
+        env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang"
+        env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang++"
+    elif arch == "armv8a":
+        env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-androideabi30-clang"
+        env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-androideabi30-clang++"
+    elif arch == "x86_64":
+        env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-androideabi30-clang"
+        env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-androideabi30-clang++"
     if env['target'] in ('debug', 'd'):
         env.Append(CCFLAGS = ['-fPIC', '-g3','-Og', '-std=c11'])
     else:
@@ -129,13 +139,24 @@ if env['build_libcmark_gfm']:
                 "-DANDROID_NATIVE_API_LEVEL=",
                 "..",
                 ]
+    elif platform == 'windows':
+        cmake = [
+                "cmake",
+                "-DCMAKE_TOOLCHAIN_FILE={}/toolchain-mingw32.cmake".format(cwd),
+                ".."
+                ]
+
     else:
         cmake = ["cmake", ".."]
     make = ["make"]
     subprocess.run(cmake)
     subprocess.run(make)
-    shutil.copy2("src/libcmark-gfm.so", lib_target_path)
-    shutil.copy2("extensions/libcmark-gfm-extensions.so", lib_target_path)
+    if platform == 'windows':
+        ext = "dll"
+    else:
+        ext = "so"
+    shutil.copy2("src/libcmark-gfm.{}".format(ext), lib_target_path)
+    shutil.copy2("extensions/libcmark-gfm-extensions.{}".format(ext), lib_target_path)
     os.chdir(cwd)
 
 Default(library)
