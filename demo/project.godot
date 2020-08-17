@@ -15,7 +15,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="cmark-gfm_gdnative"
+config/name="godot_markdown"
 run/main_scene="res://main.tscn"
 config/icon="res://icon.png"
 
