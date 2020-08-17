@@ -83,8 +83,8 @@ elif env['platform'] == "android":
         env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang"
         env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang++"
     elif arch == "armv8a":
-        env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-androideabi30-clang"
-        env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-androideabi30-clang++"
+        env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
+        env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang++"
     elif arch == "x86_64":
         env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-androideabi30-clang"
         env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-androideabi30-clang++"
@@ -132,10 +132,14 @@ if env['build_libcmark_gfm']:
 
     os.chdir(build_dir)
     if platform == 'android':
+        if arch == "armv7a":
+            android_abi = "-DANDROID_ABI=armeabi-v7a"
+        elif arch == "armv8a":
+            android_abi = "-DANDROID_ABI=arm64-v8a"
         cmake = [
                 "cmake",
                 "-DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake",
-                "-DANDROID_ABI=armeabi-v7a",
+                android_abi,
                 "-DANDROID_NATIVE_API_LEVEL=",
                 "..",
                 ]
