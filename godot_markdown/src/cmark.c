@@ -90,8 +90,8 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
     cmark_node *parent;
     cmark_node *grandparent;
     int list_level = 0;
-    int content_handled = 0;
     while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
+        int content_handled = 0;
         cmark_node *cur = cmark_iter_get_node(iter);
         cmark_node_type cur_type = cmark_node_get_type(cur);
         const char* content = cmark_node_get_literal(cur);
@@ -165,10 +165,10 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                     if (is_not_first_child_of_list) {
                         append_to_godot_string(&converted, "[indent]");
                     }
-                    append_to_godot_string(&converted, "<p>");
+                    /* append_to_godot_string(&converted, "<p>"); */
                 }
                 else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "</p>");
+                    /* append_to_godot_string(&converted, "</p>"); */
                     if (is_not_first_child_of_list) {
                         append_to_godot_string(&converted, "[/indent]");
                     }
