@@ -1,6 +1,6 @@
 extends Control
 
-onready var cmark = preload("res://bin/cmark.gdns").new()
+onready var cmark = preload("res://bin/markdown.gdns").new()
 
 func _on_Button_pressed():
 	var markdown = """literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://welt.what.re)
