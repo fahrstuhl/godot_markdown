@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://fonts/NotoSans-Regular.tres" type="DynamicFont" id=2]
 [ext_resource path="res://fonts/NotoSans-Italics.tres" type="DynamicFont" id=3]
 [ext_resource path="res://fonts/NotoSans-BoldItalics.tres" type="DynamicFont" id=4]
 [ext_resource path="res://fonts/NotoSans-Bold.tres" type="DynamicFont" id=5]
+[ext_resource path="res://fonts/NotoSansMono-Regular.tres" type="DynamicFont" id=6]
 
 [node name="main" type="Control"]
 anchor_right = 1.0
@@ -21,6 +22,7 @@ margin_top = 70.0
 margin_right = 1025.0
 margin_bottom = 599.0
 focus_mode = 2
+custom_fonts/mono_font = ExtResource( 6 )
 custom_fonts/bold_italics_font = ExtResource( 4 )
 custom_fonts/italics_font = ExtResource( 3 )
 custom_fonts/bold_font = ExtResource( 5 )
