@@ -8,9 +8,14 @@
 
 config_version=4
 
-_global_script_classes=[  ]
+_global_script_classes=[ {
+"base": "Node",
+"class": "Markdown",
+"language": "GDScript",
+"path": "res://bin/libmarkdown.gd"
+} ]
 _global_script_class_icons={
-
+"Markdown": ""
 }
 
 [application]

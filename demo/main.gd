@@ -1,12 +1,17 @@
 extends Control
 
-onready var cmark = preload("res://bin/markdown.gdns").new()
 
-func _on_Button_pressed():
-	var markdown = """literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://welt.what.re)
+var markdown = """literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://what.re)
 soft linebreak
 hard linebreak  
 end of paragraph
+
+# yee
+
+###### yeee
+
+hallo welt
+paragraph
 
 ---
 
@@ -44,4 +49,6 @@ paragraph
 	2. List item b.
 
 	This paragraph belongs to item two of the outer list."""
-	$Label.bbcode_text = "Data = " + cmark.convert_markdown(markdown)
+
+func _on_Button_pressed():
+	$Label.bbcode_text = Markdown.convert_markdown(markdown)
