@@ -99,6 +99,12 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
             case CMARK_NODE_DOCUMENT:
                 break;
             case CMARK_NODE_BLOCK_QUOTE:
+                if (ev_type == CMARK_EVENT_ENTER) {
+                    append_to_godot_string(&converted, "[indent]");
+                }
+                else if (ev_type == CMARK_EVENT_EXIT) {
+                    append_to_godot_string(&converted, "[/indent]");
+                }
                 break;
             case CMARK_NODE_LIST:
                 if (ev_type == CMARK_EVENT_ENTER) {
@@ -152,9 +158,10 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                 parent = cmark_node_parent(cur);
                 grandparent = cmark_node_parent(parent);
                 int tight;
-                int is_not_first_child_of_list;
-                if (parent != NULL && cmark_node_get_type(parent) == CMARK_NODE_ITEM) {
-                    is_not_first_child_of_list = cur != cmark_node_first_child(parent);
+                int is_child_of_item = parent != NULL && cmark_node_get_type(parent) == CMARK_NODE_ITEM;
+                int is_not_first_child_of_item;
+                if (is_child_of_item) {
+                    is_not_first_child_of_item = cur != cmark_node_first_child(parent);
                 }
                 if (grandparent != NULL && cmark_node_get_type(grandparent) == CMARK_NODE_LIST) {
                     tight = cmark_node_get_list_tight(grandparent);
@@ -162,14 +169,14 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                     tight = false;
                 }
                 if (ev_type == CMARK_EVENT_ENTER) {
-                    if (is_not_first_child_of_list) {
+                    if (is_child_of_item && is_not_first_child_of_item) {
                         append_to_godot_string(&converted, "[indent]");
                     }
                     /* append_to_godot_string(&converted, "<p>"); */
                 }
                 else if (ev_type == CMARK_EVENT_EXIT) {
                     /* append_to_godot_string(&converted, "</p>"); */
-                    if (is_not_first_child_of_list) {
+                    if (is_child_of_item && is_not_first_child_of_item) {
                         append_to_godot_string(&converted, "[/indent]");
                     }
                     if (!tight) {
@@ -181,9 +188,23 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                 }
                 break;
             case CMARK_NODE_HEADING:
+                if (ev_type == CMARK_EVENT_ENTER) {
+                    append_to_godot_string(&converted, "[");
+                }
+                else if (ev_type == CMARK_EVENT_EXIT) {
+                    append_to_godot_string(&converted, "[/");
+                }
+                append_to_godot_string(&converted, "heading_");
+                int heading_level = cmark_node_get_heading_level(cur);
+                godot_string num_gd = api->godot_string_num_int64(heading_level, 10);
+                converted = api->godot_string_operator_plus(&converted, &num_gd);
+                append_to_godot_string(&converted, "]");
+                if (ev_type == CMARK_EVENT_EXIT) {
+                    append_to_godot_string(&converted, "\n");
+                }
                 break;
             case CMARK_NODE_THEMATIC_BREAK:
-                    append_to_godot_string(&converted, "\n---\n");
+                    append_to_godot_string(&converted, "---\n\n");
                 break;
             case CMARK_NODE_FOOTNOTE_DEFINITION:
                 break;
