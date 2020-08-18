@@ -254,9 +254,9 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
         else if(cur_type == CMARK_NODE_CODE){
             if (ev_type == CMARK_EVENT_ENTER) {
                 append_to_godot_string(&converted, "[code]");
-            }
-            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, content);
                 append_to_godot_string(&converted, "[/code]");
+                content_handled = 1;
             }
         }
         else if(cur_type == CMARK_NODE_HTML_INLINE){
