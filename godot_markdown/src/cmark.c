@@ -146,6 +146,7 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                 }
                 parent = cmark_node_parent(cur);
                 char* tasklist_state = cmark_gfm_extensions_get_tasklist_state(cur);
+                bool is_tasklist = strcmp(cmark_node_get_type_string(cur), "tasklist") == 0;
                 if (parent != NULL
                         && cmark_node_get_type(parent) == CMARK_NODE_LIST
                         && cmark_node_get_list_type(parent) == CMARK_ORDERED_LIST) {
@@ -156,14 +157,14 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                     api->godot_string_destroy(&num_gd);
                     cmark_node_set_list_start(parent, list_start + 1);
                 }
+                else if (!is_tasklist) {
+                    append_to_godot_string(&converted, "* ");
+                }
                 else if (strcmp(tasklist_state, "checked") == 0) {
                     append_to_godot_string(&converted, "🔲 ");
                 }
                 else if (strcmp(tasklist_state, "unchecked") == 0) {
                     append_to_godot_string(&converted, "☑ ");
-                }
-                else {
-                    append_to_godot_string(&converted, "* ");
                 }
             }
             else if (ev_type == CMARK_EVENT_EXIT) {
