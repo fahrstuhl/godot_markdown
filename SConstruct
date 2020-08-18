@@ -114,7 +114,7 @@ print(suffix)
 env.Append(CPPPATH=['.', godot_headers_path])
 env.Append(CPPPATH=['godot_markdown/src/', *libcmark_gfm_include_paths])
 env.Append(LIBPATH=[libcmark_gfm_lib_path])
-env.Append(LIBS=['cmark-gfm'])
+env.Append(LIBS=['cmark-gfm', 'cmark-gfm-extensions'])
 
 sources = Glob('godot_markdown/src/*.c')
 

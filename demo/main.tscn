@@ -27,4 +27,7 @@ custom_fonts/bold_font = ExtResource( 5 )
 custom_fonts/normal_font = ExtResource( 2 )
 bbcode_enabled = true
 selection_enabled = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
 [connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]

@@ -1,19 +1,25 @@
 extends Control
 
 
-var markdown = """literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://what.re)
+var markdown = """~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://what.re)
 soft linebreak
 hard linebreak  
 end of paragraph
 
 # yee
 
-###### yeee
+###### tasklist
+
+- [ ] yee
+- [x] nee
+- [ ] www.autolink.com
 
 hallo welt
 paragraph
 
 ---
+
+> block quote
 
 paragraph
 

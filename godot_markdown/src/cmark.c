@@ -1,6 +1,18 @@
 #include <gdnative_api_struct.gen.h>
 #include <string.h>
 #include "cmark-gfm.h"
+#include "cmark-gfm-core-extensions.h"
+#include "strikethrough.h"
+#include "table.h"
+
+const char *extension_names[] = {
+    "autolink",
+    "strikethrough",
+    /* "table", */
+    "tagfilter",
+    "tasklist",
+    NULL,
+};
 
 const godot_gdnative_core_api_struct *api = NULL;
 const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
@@ -21,8 +33,8 @@ void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options) {
     for (int i = 0; i < api->num_extensions; i++) {
         switch (api->extensions[i]->type) {
             case GDNATIVE_EXT_NATIVESCRIPT: {
-                nativescript_api = (godot_gdnative_ext_nativescript_api_struct *)api->extensions[i];
-            }; break;
+                                                nativescript_api = (godot_gdnative_ext_nativescript_api_struct *)api->extensions[i];
+                                            }; break;
             default: break;
         }
     }
@@ -84,7 +96,19 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
     parsed = api->godot_string_utf8(&data);
     const char* markdown = api->godot_char_string_get_data(&parsed);
 
-    cmark_node * document_root = cmark_parse_document(markdown, strlen(markdown), 0);
+    cmark_gfm_core_extensions_ensure_registered();
+    cmark_parser * parser = cmark_parser_new(0);
+    for (const char **it = extension_names; *it; ++it) {
+        const char *extension_name = *it;
+        cmark_syntax_extension *syntax_extension = cmark_find_syntax_extension(extension_name);
+        if (!syntax_extension) {
+            fprintf(stderr, "%s is not a valid syntax extension\n", extension_name);
+            abort();
+        }
+        cmark_parser_attach_syntax_extension(parser, syntax_extension);
+    }
+    cmark_parser_feed(parser, markdown, strlen(markdown));
+    cmark_node * document_root = cmark_parser_finish(parser);
     cmark_iter *iter = cmark_iter_new(document_root);
     cmark_event_type ev_type;
     cmark_node *parent;
@@ -95,187 +119,201 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
         cmark_node *cur = cmark_iter_get_node(iter);
         cmark_node_type cur_type = cmark_node_get_type(cur);
         const char* content = cmark_node_get_literal(cur);
-        switch (cur_type) {
-            case CMARK_NODE_DOCUMENT:
-                break;
-            case CMARK_NODE_BLOCK_QUOTE:
-                if (ev_type == CMARK_EVENT_ENTER) {
+        if (cur_type == CMARK_NODE_DOCUMENT){
+        }
+        else if(cur_type == CMARK_NODE_BLOCK_QUOTE){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[indent]");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/indent]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_LIST){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                /* append_to_godot_string(&converted, "<li>"); */
+                list_level += 1;
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                /* append_to_godot_string(&converted, "</li>"); */
+                list_level -= 1;
+            }
+        }
+        else if(cur_type == CMARK_NODE_ITEM){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                for (int i = 1; i < list_level; i++) {
                     append_to_godot_string(&converted, "[indent]");
                 }
-                else if (ev_type == CMARK_EVENT_EXIT) {
+                parent = cmark_node_parent(cur);
+                char* tasklist_state = cmark_gfm_extensions_get_tasklist_state(cur);
+                if (parent != NULL
+                        && cmark_node_get_type(parent) == CMARK_NODE_LIST
+                        && cmark_node_get_list_type(parent) == CMARK_ORDERED_LIST) {
+                    int list_start = cmark_node_get_list_start(parent);
+                    godot_string num_gd = api->godot_string_num_int64(list_start, 10);
+                    converted = api->godot_string_operator_plus(&converted, &num_gd);
+                    append_to_godot_string(&converted, ". ");
+                    api->godot_string_destroy(&num_gd);
+                    cmark_node_set_list_start(parent, list_start + 1);
+                }
+                else if (strcmp(tasklist_state, "checked") == 0) {
+                    append_to_godot_string(&converted, "☑ ");
+                }
+                else if (strcmp(tasklist_state, "unchecked") == 0) {
+                    append_to_godot_string(&converted, "🔲 ");
+                }
+                else {
+                    append_to_godot_string(&converted, "* ");
+                }
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                for (int i = 1; i < list_level; i++) {
                     append_to_godot_string(&converted, "[/indent]");
                 }
-                break;
-            case CMARK_NODE_LIST:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    /* append_to_godot_string(&converted, "<li>"); */
-                    list_level += 1;
+            }
+        }
+        else if(cur_type == CMARK_NODE_CODE_BLOCK){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[indent][code]");
+                append_to_godot_string(&converted, content);
+                append_to_godot_string(&converted, "[/code][/indent]");
+                content_handled = 1;
+            }
+        }
+        else if(cur_type == CMARK_NODE_HTML_BLOCK){
+        }
+        else if(cur_type == CMARK_NODE_CUSTOM_BLOCK){
+        }
+        else if(cur_type == CMARK_NODE_PARAGRAPH){
+            parent = cmark_node_parent(cur);
+            grandparent = cmark_node_parent(parent);
+            int tight;
+            int is_child_of_item = parent != NULL && cmark_node_get_type(parent) == CMARK_NODE_ITEM;
+            int is_not_first_child_of_item;
+            if (is_child_of_item) {
+                is_not_first_child_of_item = cur != cmark_node_first_child(parent);
+            }
+            if (grandparent != NULL && cmark_node_get_type(grandparent) == CMARK_NODE_LIST) {
+                tight = cmark_node_get_list_tight(grandparent);
+            } else {
+                tight = false;
+            }
+            if (ev_type == CMARK_EVENT_ENTER) {
+                if (is_child_of_item && is_not_first_child_of_item) {
+                    append_to_godot_string(&converted, "[indent]");
                 }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    /* append_to_godot_string(&converted, "</li>"); */
-                    list_level -= 1;
+                /* append_to_godot_string(&converted, "<p>"); */
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                /* append_to_godot_string(&converted, "</p>"); */
+                if (is_child_of_item && is_not_first_child_of_item) {
+                    append_to_godot_string(&converted, "[/indent]");
                 }
-                break;
-            case CMARK_NODE_ITEM:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    for (int i = 1; i < list_level; i++) {
-                        append_to_godot_string(&converted, "[indent]");
-                    }
-                    parent = cmark_node_parent(cur);
-                    if (parent != NULL
-                            && cmark_node_get_type(parent) == CMARK_NODE_LIST
-                            && cmark_node_get_list_type(parent) == CMARK_ORDERED_LIST) {
-                        int list_start = cmark_node_get_list_start(parent);
-                        godot_string num_gd = api->godot_string_num_int64(list_start, 10);
-                        converted = api->godot_string_operator_plus(&converted, &num_gd);
-                        append_to_godot_string(&converted, ". ");
-                        api->godot_string_destroy(&num_gd);
-                        cmark_node_set_list_start(parent, list_start + 1);
-                    }
-                    else {
-                        append_to_godot_string(&converted, "* ");
-                    }
+                if (!tight) {
+                    append_to_godot_string(&converted, "\n\n");
                 }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    for (int i = 1; i < list_level; i++) {
-                        append_to_godot_string(&converted, "[/indent]");
-                    }
+                else {
+                    append_to_godot_string(&converted, "\n");
                 }
-                break;
-            case CMARK_NODE_CODE_BLOCK:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[indent][code]");
-                    append_to_godot_string(&converted, content);
-                    append_to_godot_string(&converted, "[/code][/indent]");
-                    content_handled = 1;
-                }
-                break;
-            case CMARK_NODE_HTML_BLOCK:
-                break;
-            case CMARK_NODE_CUSTOM_BLOCK:
-                break;
-            case CMARK_NODE_PARAGRAPH:
-                parent = cmark_node_parent(cur);
-                grandparent = cmark_node_parent(parent);
-                int tight;
-                int is_child_of_item = parent != NULL && cmark_node_get_type(parent) == CMARK_NODE_ITEM;
-                int is_not_first_child_of_item;
-                if (is_child_of_item) {
-                    is_not_first_child_of_item = cur != cmark_node_first_child(parent);
-                }
-                if (grandparent != NULL && cmark_node_get_type(grandparent) == CMARK_NODE_LIST) {
-                    tight = cmark_node_get_list_tight(grandparent);
-                } else {
-                    tight = false;
-                }
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    if (is_child_of_item && is_not_first_child_of_item) {
-                        append_to_godot_string(&converted, "[indent]");
-                    }
-                    /* append_to_godot_string(&converted, "<p>"); */
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    /* append_to_godot_string(&converted, "</p>"); */
-                    if (is_child_of_item && is_not_first_child_of_item) {
-                        append_to_godot_string(&converted, "[/indent]");
-                    }
-                    if (!tight) {
-                        append_to_godot_string(&converted, "\n\n");
-                    }
-                    else {
-                        append_to_godot_string(&converted, "\n");
-                    }
-                }
-                break;
-            case CMARK_NODE_HEADING:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[");
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/");
-                }
-                append_to_godot_string(&converted, "heading_");
-                int heading_level = cmark_node_get_heading_level(cur);
-                godot_string num_gd = api->godot_string_num_int64(heading_level, 10);
-                converted = api->godot_string_operator_plus(&converted, &num_gd);
+            }
+        }
+        else if(cur_type == CMARK_NODE_HEADING){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/");
+            }
+            append_to_godot_string(&converted, "heading_");
+            int heading_level = cmark_node_get_heading_level(cur);
+            godot_string num_gd = api->godot_string_num_int64(heading_level, 10);
+            converted = api->godot_string_operator_plus(&converted, &num_gd);
+            append_to_godot_string(&converted, "]");
+            if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "\n");
+            }
+        }
+        else if(cur_type == CMARK_NODE_THEMATIC_BREAK){
+            append_to_godot_string(&converted, "---\n\n");
+        }
+        else if(cur_type == CMARK_NODE_FOOTNOTE_DEFINITION){
+        }
+        else if(cur_type == CMARK_NODE_TEXT){
+        }
+        else if(cur_type == CMARK_NODE_SOFTBREAK){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, " ");
+            }
+        }
+        else if(cur_type == CMARK_NODE_LINEBREAK){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "\n");
+            }
+        }
+        else if(cur_type == CMARK_NODE_CODE){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[code]");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/code]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_HTML_INLINE){
+        }
+        else if(cur_type == CMARK_NODE_CUSTOM_INLINE){
+        }
+        else if(cur_type == CMARK_NODE_EMPH){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[i]");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/i]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_STRONG){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[b]");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/b]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_LINK){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[url=");
+                append_to_godot_string(&converted, cmark_node_get_url(cur));
                 append_to_godot_string(&converted, "]");
-                if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "\n");
-                }
-                break;
-            case CMARK_NODE_THEMATIC_BREAK:
-                    append_to_godot_string(&converted, "---\n\n");
-                break;
-            case CMARK_NODE_FOOTNOTE_DEFINITION:
-                break;
-            case CMARK_NODE_TEXT:
-                break;
-            case CMARK_NODE_SOFTBREAK:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, " ");
-                }
-                break;
-            case CMARK_NODE_LINEBREAK:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "\n");
-                }
-                break;
-            case CMARK_NODE_CODE:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[code]");
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/code]");
-                }
-                break;
-            case CMARK_NODE_HTML_INLINE:
-                break;
-            case CMARK_NODE_CUSTOM_INLINE:
-                break;
-            case CMARK_NODE_EMPH:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[i]");
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/i]");
-                }
-                break;
-            case CMARK_NODE_STRONG:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[b]");
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/b]");
-                }
-                break;
-            case CMARK_NODE_LINK:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[url=");
-                    append_to_godot_string(&converted, cmark_node_get_url(cur));
-                    append_to_godot_string(&converted, "]");
-                    append_to_godot_string(&converted, cmark_node_get_title(cur));
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/url]");
-                }
-                break;
-            case CMARK_NODE_IMAGE:
-                if (ev_type == CMARK_EVENT_ENTER) {
-                    append_to_godot_string(&converted, "[img]");
-                    append_to_godot_string(&converted, cmark_node_get_url(cur));
-                }
-                else if (ev_type == CMARK_EVENT_EXIT) {
-                    append_to_godot_string(&converted, "[/img]");
-                }
-                break;
-            case CMARK_NODE_FOOTNOTE_REFERENCE:
-                break;
+                append_to_godot_string(&converted, cmark_node_get_title(cur));
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/url]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_IMAGE){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[img]");
+                append_to_godot_string(&converted, cmark_node_get_url(cur));
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/img]");
+            }
+        }
+        else if(cur_type == CMARK_NODE_FOOTNOTE_REFERENCE){
+        }
+        else if(cur_type == CMARK_NODE_STRIKETHROUGH){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                append_to_godot_string(&converted, "[s]");
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                append_to_godot_string(&converted, "[/s]");
+            }
         }
         if (content != NULL && !content_handled) {
             append_to_godot_string(&converted, content);
         }
     }
     cmark_iter_free(iter);
+    cmark_parser_free(parser);
     /* char* html = cmark_markdown_to_html(markdown, strlen(markdown), 0); */
     /* api->godot_string_new(&converted); */
     /* api->godot_string_parse_utf8(&converted, html); */
