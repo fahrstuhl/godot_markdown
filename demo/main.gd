@@ -1,7 +1,7 @@
 extends Control
 
 
-var markdown = """~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hallo](https://what.re)
+var markdown = """~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hello](https://github.com/fahrstuhl/godot_markdown/)
 soft linebreak
 hard linebreak  
 end of paragraph
@@ -12,7 +12,7 @@ end of paragraph
 
 - [ ] yee
 - [x] nee
-- [ ] www.autolink.com
+- [ ] www.autolink.example
 
 hallo welt
 paragraph
@@ -27,12 +27,12 @@ paragraph
 
 <file:///tmp>
 
-2. hallo
-2. welt
-3. 1. sogar nested listen
-   2. funktionieren hoffentlich
-3. listen
-4. funktionieren
+2. hello
+2. world
+3. 1. even nested lists
+   2. are working
+3. lists
+4. are working
 
 1.  List item one.
 
