@@ -141,7 +141,7 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
         }
         else if(cur_type == CMARK_NODE_ITEM){
             if (ev_type == CMARK_EVENT_ENTER) {
-                for (int i = 1; i < list_level; i++) {
+                if(list_level >= 1) {
                     append_to_godot_string(&converted, "[indent]");
                 }
                 parent = cmark_node_parent(cur);
@@ -168,7 +168,7 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                 }
             }
             else if (ev_type == CMARK_EVENT_EXIT) {
-                for (int i = 1; i < list_level; i++) {
+                if(list_level >= 1) {
                     append_to_godot_string(&converted, "[/indent]");
                 }
             }
@@ -201,21 +201,24 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
             }
             if (ev_type == CMARK_EVENT_ENTER) {
                 if (is_child_of_item && is_not_first_child_of_item) {
-                    append_to_godot_string(&converted, "[indent]");
+                    append_to_godot_string(&converted, "  ");
                 }
                 /* append_to_godot_string(&converted, "<p>"); */
             }
             else if (ev_type == CMARK_EVENT_EXIT) {
                 /* append_to_godot_string(&converted, "</p>"); */
-                if (is_child_of_item && is_not_first_child_of_item) {
-                    append_to_godot_string(&converted, "[/indent]");
-                }
-                // TODO: non-tight lists are very ugly this way
-                /* if (!tight) { */
-                /*     append_to_godot_string(&converted, "\n\n"); */
-                /* } */
-                else {
-                    append_to_godot_string(&converted, "\n");
+                if (is_child_of_item) {
+                    if (is_not_first_child_of_item) {
+                        /* append_to_godot_string(&converted, "[/indent]"); */
+                    }
+                    if (!tight) {
+                        append_to_godot_string(&converted, "\n\n");
+                    }
+                    else {
+                        append_to_godot_string(&converted, "\n");
+                    }
+                } else {
+                    append_to_godot_string(&converted, "\n\n");
                 }
             }
         }
