@@ -210,9 +210,10 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                 if (is_child_of_item && is_not_first_child_of_item) {
                     append_to_godot_string(&converted, "[/indent]");
                 }
-                if (!tight) {
-                    append_to_godot_string(&converted, "\n\n");
-                }
+                // TODO: non-tight lists are very ugly this way
+                /* if (!tight) { */
+                /*     append_to_godot_string(&converted, "\n\n"); */
+                /* } */
                 else {
                     append_to_godot_string(&converted, "\n");
                 }
