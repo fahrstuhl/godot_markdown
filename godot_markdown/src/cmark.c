@@ -158,7 +158,7 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
                     cmark_node_set_list_start(parent, list_start + 1);
                 }
                 else if (!is_tasklist) {
-                    append_to_godot_string(&converted, "* ");
+                    append_to_godot_string(&converted, "• ");
                 }
                 else if (strcmp(tasklist_state, "checked") == 0) {
                     append_to_godot_string(&converted, "🔲 ");
