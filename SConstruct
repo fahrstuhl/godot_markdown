@@ -114,7 +114,7 @@ print(suffix)
 env.Append(CPPPATH=['.', godot_headers_path])
 env.Append(CPPPATH=['godot_markdown/src/', *libcmark_gfm_include_paths])
 env.Append(LIBPATH=[libcmark_gfm_lib_path])
-env.Append(LIBS=['cmark-gfm', 'cmark-gfm-extensions'])
+env.Append(LIBS=['cmark-gfm-extensions', 'cmark-gfm', 'cmark-gfm-extensions'])
 
 sources = Glob('godot_markdown/src/*.c')
 
@@ -161,8 +161,8 @@ if env['build_libcmark_gfm']:
         ext = "dll"
     else:
         ext = "so"
-    shutil.copy2("src/libcmark-gfm.{}".format(ext), lib_target_path)
     shutil.copy2("extensions/libcmark-gfm-extensions.{}".format(ext), lib_target_path)
+    shutil.copy2("src/libcmark-gfm.{}".format(ext), lib_target_path)
     os.chdir(cwd)
 
 Default(library)

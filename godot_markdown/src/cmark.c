@@ -2,13 +2,17 @@
 #include <string.h>
 #include "cmark-gfm.h"
 #include "cmark-gfm-core-extensions.h"
-#include "strikethrough.h"
 #include "table.h"
+#ifndef _WINDOWS
+#include "strikethrough.h"
+#endif
 
 const char *extension_names[] = {
     "autolink",
+#ifndef _WINDOWS
     "strikethrough",
-    /* "table", */
+#endif
+    "table",
     "tagfilter",
     "tasklist",
     NULL,
@@ -305,6 +309,7 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
         }
         else if(cur_type == CMARK_NODE_FOOTNOTE_REFERENCE){
         }
+#ifndef _WINDOWS
         else if(cur_type == CMARK_NODE_STRIKETHROUGH){
             if (ev_type == CMARK_EVENT_ENTER) {
                 append_to_godot_string(&converted, "[s]");
@@ -312,6 +317,13 @@ godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_da
             else if (ev_type == CMARK_EVENT_EXIT) {
                 append_to_godot_string(&converted, "[/s]");
             }
+        }
+#endif
+        else if(cur_type == CMARK_NODE_TABLE){
+        }
+        else if(cur_type == CMARK_NODE_TABLE_ROW){
+        }
+        else if(cur_type == CMARK_NODE_TABLE_CELL){
         }
         if (content != NULL && !content_handled) {
             append_to_godot_string(&converted, content);
