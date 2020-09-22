@@ -160,7 +160,7 @@ if env['build_libcmark_gfm']:
     if platform == 'windows':
         ext = "dll"
     else:
-        ext = "so"
+        ext = "a"
     shutil.copy2("extensions/libcmark-gfm-extensions.{}".format(ext), lib_target_path)
     shutil.copy2("src/libcmark-gfm.{}".format(ext), lib_target_path)
     os.chdir(cwd)
