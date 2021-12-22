@@ -1,4 +1,4 @@
-#include <gdnative_api_struct.gen.h>
+#include <godot/gdnative_interface.h>
 #include <string.h>
 #include "cmark-gfm.h"
 #include "cmark-gfm-core-extensions.h"
@@ -18,35 +18,82 @@ const char *extension_names[] = {
     NULL,
 };
 
-const godot_gdnative_core_api_struct *api = NULL;
-const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
+const char parent_name[] = "Object";
+const char class_name[] = "CMark";
+const char method_name[] = "convert";
 
-void *cmark_constructor(godot_object *p_instance, void *p_method_data);
-void cmark_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data);
-godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_data,
-        void *p_user_data, int p_num_args, godot_variant **p_args);
+const GDNativeInterface *gdn_interface = NULL;
+GDNativeExtensionClassLibraryPtr library = NULL;
+
+/* void *cmark_constructor(godot_object *p_instance, void *p_method_data); */
+/* void cmark_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data); */
+/* godot_variant cmark_convert_markdown(godot_object *p_instance, void *p_method_data, */
+/*         void *p_user_data, int p_num_args, godot_variant **p_args); */
 
 typedef struct user_data_struct {
     char data[256];
 } user_data_struct;
 
-void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options) {
-    api = p_options->api_struct;
+void initialize_level(void *userdata, GDNativeInitializationLevel p_level) {
+}
 
-    // Now find our extensions.
-    for (int i = 0; i < api->num_extensions; i++) {
-        switch (api->extensions[i]->type) {
-            case GDNATIVE_EXT_NATIVESCRIPT: {
-                                                nativescript_api = (godot_gdnative_ext_nativescript_api_struct *)api->extensions[i];
-                                            }; break;
-            default: break;
-        }
+void deinitialize_level(void *userdata, GDNativeInitializationLevel p_level) {
+	/* void (*classdb_unregister_extension_class)(const GDNativeExtensionClassLibraryPtr p_library, const char *p_class_name); /1* Unregistering a parent class before a class that inherits it will result in failure. Inheritors must be unregistered first. *1/ */
+}
+
+static GDNativeObjectPtr create_md(void *data) {                                                                  
+}
+
+static void free_md(void *data, GDExtensionClassInstancePtr ptr) {
+    if (ptr) {
+        gdn_interface = NULL;
+        library = NULL;
     }
 }
 
-void GDN_EXPORT godot_gdnative_terminate(godot_gdnative_terminate_options *p_options) {
-    api = NULL;
-    nativescript_api = NULL;
+GDNativeBool godot_gdnative_init(const GDNativeInterface *p_interface, const GDNativeExtensionClassLibraryPtr p_library, GDNativeInitialization *r_initialization) {
+    gdn_interface = p_interface;
+    library = p_library;
+    r_initialization->initialize = &initialize_level;
+    r_initialization->deinitialize = &deinitialize_level;
+    GDNativeExtensionClassCreationInfo class_info = {
+		NULL, // GDNativeExtensionClassSet set_func;
+		NULL, // GDNativeExtensionClassGet get_func;
+		NULL, // GDNativeExtensionClassGetPropertyList get_property_list_func;
+		NULL, // GDNativeExtensionClassFreePropertyList free_property_list_func;
+		NULL, // GDNativeExtensionClassNotification notification_func;
+		NULL, // GDNativeExtensionClassToString to_string_func;
+		NULL, // GDNativeExtensionClassReference reference_func;
+		NULL, // GDNativeExtensionClassUnreference
+		create_md, // GDNativeExtensionClassCreateInstance create_instance_func; /* this one is mandatory */
+		free_md, // GDNativeExtensionClassFreeInstance free_instance_func; /* this one is mandatory */
+		NULL, // GDNativeExtensionClassGetVirtual get_virtual_func;
+		NULL, // void *class_userdata;
+	};
+    gdn_interface->classdb_register_extension_class(library, class_name, parent_name, class_info);
+	GDNativeExtensionClassMethodInfo method_info = {
+		method_name, //const char *name;
+		p_method, //void *method_userdata;
+		MethodBind::bind_call, //GDNativeExtensionClassMethodCall call_func;
+		MethodBind::bind_ptrcall, //GDNativeExtensionClassMethodPtrCall ptrcall_func;
+		GDNATIVE_EXTENSION_METHOD_FLAGS_DEFAULT, //uint32_t method_flags; /* GDNativeExtensionClassMethodFlags */
+		(uint32_t)p_method->get_argument_count(), //uint32_t argument_count;
+		(GDNativeBool)p_method->has_return(), //GDNativeBool has_return_value;
+		MethodBind::bind_get_argument_type, //(GDNativeExtensionClassMethodGetArgumentType) get_argument_type_func;
+		MethodBind::bind_get_argument_info, //GDNativeExtensionClassMethodGetArgumentInfo get_argument_info_func; /* name and hint information for the argument can be omitted in release builds. Class name should always be present if it applies. */
+		MethodBind::bind_get_argument_metadata, //GDNativeExtensionClassMethodGetArgumentMetadata get_argument_metadata_func;
+		p_method->get_hint_flags(), //uint32_t default_argument_count;
+		nullptr, //GDNativeVariantPtr *default_arguments;
+	};
+	gdn_interface->classdb_register_extension_class_method(library, method_name, &method_info);
+	/* void (*classdb_unregister_extension_class)(const GDNativeExtensionClassLibraryPtr p_library, const char *p_class_name); /1* Unregistering a parent class before a class that inherits it will result in failure. Inheritors must be unregistered first. *1/ */
+
+    return 1;
+}
+
+void godot_gdnative_terminate(godot_gdnative_terminate_options *p_options) {
+    gdn_interface = NULL;
+    library = NULL;
 }
 
 void GDN_EXPORT godot_nativescript_init(void *p_handle) {
