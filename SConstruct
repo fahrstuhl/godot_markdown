@@ -165,6 +165,10 @@ if env['build_libcmark_gfm']:
     shutil.copy2("src/libcmark-gfm.{}".format(ext), lib_target_path)
     os.chdir(cwd)
 
+env.Tool('compilation_db')
+cdb = env.CompilationDatabase('compile_commands.json')
+Alias('cdb', cdb)
+
 Default(library)
 
 # Generates help for the -h scons option.
