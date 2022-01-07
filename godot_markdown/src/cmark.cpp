@@ -179,17 +179,13 @@ String Cmark::convert_markdown(const String &markdown) {
         }
         else if(cur_type == CMARK_NODE_HEADING){
             if (ev_type == CMARK_EVENT_ENTER) {
-                converted = converted + "[";
+                converted = converted + "[font_size={heading_";
+                int heading_level = cmark_node_get_heading_level(cur);
+                converted = converted + String::num(heading_level, 0);
+                converted = converted + "}]";
             }
             else if (ev_type == CMARK_EVENT_EXIT) {
-                converted = converted + "[/";
-            }
-            converted = converted + "heading_";
-            int heading_level = cmark_node_get_heading_level(cur);
-            converted = converted + String::num(heading_level, 0);
-            converted = converted + "]";
-            if (ev_type == CMARK_EVENT_EXIT) {
-                converted = converted + "\n";
+                converted = converted + "[/font_size]\n";
             }
         }
         else if(cur_type == CMARK_NODE_THEMATIC_BREAK){
