@@ -16,3 +16,6 @@ data_*/
 # When configure fails, SCons outputs these
 config.log
 .sconf_temp
+
+# Compilation results
+*.os
