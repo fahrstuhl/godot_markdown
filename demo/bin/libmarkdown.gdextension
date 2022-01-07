@@ -1,0 +1,9 @@
+[configuration]
+
+entry_symbol = "cmark_library_init"
+
+[libraries]
+linux.debug.64 = "linux/x86_64/debug/libmarkdown.so"
+linux.release.64 = "linux/x86_64/release/libmarkdown.so"
+windows.64 = "bin/libgdmarkdown.windows.debug.64.dll"
+
