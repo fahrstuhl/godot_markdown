@@ -59,5 +59,6 @@ paragraph
 
 	This paragraph belongs to item two of the outer list."""
 
+
 func _on_Button_pressed():
-	$Label.bbcode_text = Markdown.convert_markdown(markdown)
+	$Label.text = Markdown.convert_markdown(markdown)

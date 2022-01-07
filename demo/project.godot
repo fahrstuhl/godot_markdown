@@ -6,14 +6,14 @@
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
 
-config_version=4
+config_version=5
 
-_global_script_classes=[ {
+_global_script_classes=[{
 "base": "Node",
-"class": "Markdown",
-"language": "GDScript",
+"class": &"Markdown",
+"language": &"GDScript",
 "path": "res://bin/libmarkdown.gd"
-} ]
+}]
 _global_script_class_icons={
 "Markdown": ""
 }
@@ -23,6 +23,7 @@ _global_script_class_icons={
 config/name="godot_markdown"
 run/main_scene="res://main.tscn"
 config/icon="res://icon.png"
+config/features=PackedStringArray("4.0")
 
 [rendering]
 
