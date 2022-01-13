@@ -53,7 +53,9 @@ String Cmark::convert_markdown(const String &markdown) {
     String converted = String();
 
     cmark_gfm_core_extensions_ensure_registered();
-    const char* to_parse = markdown.utf8().get_data();
+    CharString utf8 = markdown.utf8();
+    const char* to_parse = utf8.get_data();
+    UtilityFunctions::print(markdown.length(), ", ", strlen(to_parse));
     cmark_parser * parser = cmark_parser_new(0);
     for (const char **it = extension_names; *it; ++it) {
         const char *extension_name = *it;
@@ -76,6 +78,7 @@ String Cmark::convert_markdown(const String &markdown) {
         cmark_node *cur = cmark_iter_get_node(iter);
         cmark_node_type cur_type = cmark_node_get_type(cur);
         const char* content = cmark_node_get_literal(cur);
+        UtilityFunctions::print(converted.length());
         if (cur_type == CMARK_NODE_DOCUMENT){
         }
         else if(cur_type == CMARK_NODE_BLOCK_QUOTE){
