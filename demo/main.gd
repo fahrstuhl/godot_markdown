@@ -1,7 +1,7 @@
 extends Control
 
 
-var markdown = """~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hello](https://github.com/fahrstuhl/godot_markdown/)
+var markdown = """öäüß~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hello](https://github.com/fahrstuhl/godot_markdown/)
 soft linebreak
 hard linebreak  
 end of paragraph
@@ -55,9 +55,8 @@ paragraph
 
 	   This paragraph is part of the preceding list item.
 
-	2. List item b.
-
-	This paragraph belongs to item two of the outer list."""
+~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hello](https://github.com/fahrstuhl/godot_markdown/)
+uiaenrtdüöä"""
 
 
 func _on_Button_pressed():
