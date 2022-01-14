@@ -2,6 +2,7 @@
 .import/
 export.cfg
 export_presets.cfg
+*.import
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -19,3 +20,6 @@ config.log
 
 # Compilation results
 *.os
+
+# Compile commands
+compile_commands.json
