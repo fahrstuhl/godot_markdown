@@ -30,7 +30,7 @@
 
 #include "register_types.h"
 
-#include <godot/gdnative_interface.h>
+#include <gdextension_interface.h>
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -40,20 +40,17 @@
 
 using namespace godot;
 
-void register_cmark_types() {
+void register_cmark_types(void *userdata, GDExtensionInitializationLevel p_level) {
 	ClassDB::register_class<Cmark>();
 }
 
-void unregister_cmark_types() {}
+void unregister_cmark_types(void *userdata, GDExtensionInitializationLevel p_level) {}
 
 extern "C" {
 
-GDNativeBool GDN_EXPORT cmark_library_init(const GDNativeInterface *p_interface, const GDNativeExtensionClassLibraryPtr p_library, GDNativeInitialization *r_initialization) {
-	godot::GDExtensionBinding::InitObject init_obj(p_interface, p_library, r_initialization);
-
-	init_obj.register_scene_initializer(register_cmark_types);
-	init_obj.register_scene_terminator(unregister_cmark_types);
-
-	return init_obj.init();
+GDExtensionBool cmark_library_init(const GDExtensionInterface *p_interface, const GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization) {
+	r_initialization->initialize = &register_cmark_types;
+	r_initialization->deinitialize = &unregister_cmark_types;
+	return 1;
 }
 }

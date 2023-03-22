@@ -7,7 +7,7 @@ import shutil
 
 # Local dependency paths, adapt them to your setup
 cpp_bindings_path = "godot-cpp/"
-godot_headers_path = cpp_bindings_path + "godot-headers/"
+godot_extension_path = cpp_bindings_path + "gdextension/"
 cpp_library = "libgodot-cpp"
 
 # Try to detect the host platform automatically.
@@ -28,7 +28,7 @@ env = Environment(ENV=os.environ)
 opts = Variables([], ARGUMENTS)
 
 # Define our options
-opts.Add(EnumVariable("target", "Compilation target", "debug", allowed_values=("debug", "release"), ignorecase=2))
+opts.Add(EnumVariable("target", "Compilation target", "template_debug", allowed_values=("template_debug", "template_release"), ignorecase=2))
 opts.Add(
     EnumVariable(
         "platform",
@@ -121,7 +121,7 @@ elif env["platform"] in ("x11", "linux"):
     else:
         env.Append(CCFLAGS=["-g", "-O3"])
 
-    arch_suffix = str(bits)
+    arch_suffix = env["arch"]
 elif env["platform"] == "windows":
     cpp_library += ".windows"
     # This makes sure to keep the session environment variables on windows,
@@ -178,7 +178,7 @@ libcmark_gfm_include_paths = [
         "godot_markdown/thirdparty/cmark-gfm/build_{}_{}/extensions/".format(env['platform'], env['arch']), # for extensions_export.h
         ]
 
-env.Append(CPPPATH=[".", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/", 'godot_markdown/src/', *libcmark_gfm_include_paths])
+env.Append(CPPPATH=[".", godot_extension_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/", 'godot_markdown/src/', *libcmark_gfm_include_paths])
 env.Append(LIBPATH=[libcmark_gfm_lib_path, cpp_bindings_path + "bin/"])
 env.Append(LIBS=['cmark-gfm-extensions', 'cmark-gfm', 'cmark-gfm-extensions', cpp_library])
 

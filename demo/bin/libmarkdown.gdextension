@@ -3,7 +3,7 @@
 entry_symbol = "cmark_library_init"
 
 [libraries]
-linux.debug.64 = "res:///bin/linux/x86_64/debug/libmarkdown.so"
-linux.release.64 = "res:///bin/linux/x86_64/release/libmarkdown.so"
-windows.64 = "res:///bin/windows/x86_64/release/libmarkdown.dll"
+linux.debug.64 = "res:///bin/linux/x86_64/template_debug/libmarkdown.so"
+linux.release.64 = "res:///bin/linux/x86_64/template_release/libmarkdown.so"
+windows.64 = "res:///bin/windows/x86_64/template_release/libmarkdown.dll"
 
