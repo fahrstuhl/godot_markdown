@@ -130,7 +130,7 @@ String Cmark::convert_markdown(const String &markdown) {
         else if(cur_type == CMARK_NODE_CODE_BLOCK){
             if (ev_type == CMARK_EVENT_ENTER) {
                 converted = converted + "[indent][code]";
-                converted = converted + content;
+                converted = converted + String::utf8(content);
                 converted = converted + "[/code][/indent]";
                 content_handled = 1;
             }
@@ -207,7 +207,7 @@ String Cmark::convert_markdown(const String &markdown) {
         else if(cur_type == CMARK_NODE_CODE){
             if (ev_type == CMARK_EVENT_ENTER) {
                 converted = converted + "[code]";
-                converted = converted + content;
+                converted = converted + String::utf8(content);
                 converted = converted + "[/code]";
                 content_handled = 1;
             }
@@ -271,7 +271,7 @@ String Cmark::convert_markdown(const String &markdown) {
         else if(cur_type == CMARK_NODE_TABLE_CELL){
         }
         if (content != NULL && !content_handled) {
-            converted = converted + content;
+            converted = converted + String::utf8(content);
         }
     }
     cmark_iter_free(iter);
