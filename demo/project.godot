@@ -8,25 +8,19 @@
 
 config_version=5
 
-_global_script_classes=[{
-"base": "Node",
-"class": &"Markdown",
-"language": &"GDScript",
-"path": "res://bin/libmarkdown.gd"
-}]
-_global_script_class_icons={
-"Markdown": ""
-}
-
 [application]
 
 config/name="godot_markdown"
 run/main_scene="res://main.tscn"
-config/icon="res://icon.png"
 config/features=PackedStringArray("4.0")
+run/low_processor_mode=true
+boot_splash/show_image=false
+config/icon="res://icon.png"
 
 [rendering]
 
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
 quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false

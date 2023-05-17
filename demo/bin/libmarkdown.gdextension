@@ -3,7 +3,9 @@
 entry_symbol = "cmark_library_init"
 
 [libraries]
-linux.debug.64 = "res:///bin/linux/x86_64/template_debug/libmarkdown.so"
-linux.release.64 = "res:///bin/linux/x86_64/template_release/libmarkdown.so"
-windows.64 = "res:///bin/windows/x86_64/template_release/libmarkdown.dll"
-
+linux.debug.64 = "res://bin/linux/x86_64/template_debug/libmarkdown.so"
+linux.release.64 = "res://bin/linux/x86_64/template_release/libmarkdown.so"
+android.debug.arm64 = "res://bin/android/armv8a/template_debug/libmarkdown.so"
+android.release.arm64 = "res://bin/android/armv8a/template_release/libmarkdown.so"
+android.release.arm32 = "res://bin/android/armv7a/template_release/libmarkdown.so"
+android.release.x86_64 = "res://bin/android/x86_64/template_release/libmarkdown.so"

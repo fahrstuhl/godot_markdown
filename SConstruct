@@ -122,6 +122,7 @@ elif env["platform"] in ("x11", "linux"):
         env.Append(CCFLAGS=["-g", "-O3"])
 
     arch_suffix = env["arch"]
+
 elif env["platform"] == "windows":
     cpp_library += ".windows"
     # This makes sure to keep the session environment variables on windows,
@@ -148,21 +149,26 @@ elif env["platform"] == "windows":
     arch_suffix = str(bits)
 
 elif env['platform'] == "android":
+    cpp_library += ".android"
     if env['arch'] == "armv7a":
+        arch_suffix = "arm32"
         env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang"
         env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang++"
     elif env['arch'] == "armv8a":
+        arch_suffix = "arm64"
         env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
         env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang++"
     elif env['arch'] == "x86_64":
+        arch_suffix = env["arch"]
         env['CC'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android30-clang"
         env['CXX'] = env['android_ndk'] + "/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android30-clang++"
-    env.Append(CXXFLAGS=["-std:c++17"])
+    env.Append(CXXFLAGS=["-std=c++17"])
     env.Append(CFLAGS=["-std=c11"])
     if env['target'] == 'debug':
         env.Append(CCFLAGS = ['-fPIC', '-g3','-Og'])
     else:
         env.Append(CCFLAGS = ['-fPIC', '-g','-O3'])
+
 
 # suffix our godot-cpp library
 cpp_library += "." + env["target"] + "." + arch_suffix
@@ -180,7 +186,7 @@ libcmark_gfm_include_paths = [
 
 env.Append(CPPPATH=[".", godot_extension_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/", 'godot_markdown/src/', *libcmark_gfm_include_paths])
 env.Append(LIBPATH=[libcmark_gfm_lib_path, cpp_bindings_path + "bin/"])
-env.Append(LIBS=['cmark-gfm-extensions', 'cmark-gfm', 'cmark-gfm-extensions', cpp_library])
+env.Append(LIBS=[cpp_library, 'cmark-gfm-extensions', 'cmark-gfm'])
 
 # sources = Glob('godot_markdown/src/*.c')
 sources = Glob('godot_markdown/src/*.cpp')
@@ -207,7 +213,7 @@ if env['build_libcmark_gfm']:
             android_abi = "-DANDROID_ABI=x86_64"
         cmake = [
                 "cmake",
-                "-DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake",
+                "-DCMAKE_TOOLCHAIN_FILE={}/build/cmake/android.toolchain.cmake".format(env['android_ndk']),
                 android_abi,
                 "-DANDROID_NATIVE_API_LEVEL=",
                 "..",
