@@ -131,22 +131,20 @@ elif env["platform"] == "windows":
     env['CC'] = 'x86_64-w64-mingw32-gcc'
     env['CXX'] = 'x86_64-w64-mingw32-gcc'
     env.Append(CPPDEFINES=["WIN32", "_WIN32", "_WINDOWS", "_CRT_SECURE_NO_WARNINGS"])
-    env.Append(LIBS=['advapi32'])
-    env.Append(CCFLAGS=["-W3", "-GR"])
-    env.Append(CXXFLAGS=["-std:c++17"])
+    env.Append(CXXFLAGS=["-std=c++17"])
     env.Append(CFLAGS=["-std=c11"])
     if env["target"] == "debug":
-        env.Append(CPPDEFINES=["_DEBUG"])
-        env.Append(CCFLAGS=["-EHsc", "-MDd", "-ZI", "-FS"])
-        env.Append(LINKFLAGS=["-DEBUG"])
+        env.Append(CCFLAGS=["-g3", "-Og"])
     else:
-        env.Append(CPPDEFINES=["NDEBUG"])
-        env.Append(CCFLAGS=["-O2", "-EHsc", "-MD"])
+        env.Append(CCFLAGS=["-g", "-O3"])
+
+    env.Append(LINKFLAGS=["-static-libgcc", "-static-libstdc++", "-R"])
+    env.Append(LIBS=['stdc++', 'pthread'])
 
     if not(env["use_llvm"]):
         env.Append(CPPDEFINES=["TYPED_METHOD_BIND"])
 
-    arch_suffix = str(bits)
+    arch_suffix = env["arch"]
 
 elif env['platform'] == "android":
     cpp_library += ".android"
@@ -231,7 +229,7 @@ if env['build_libcmark_gfm']:
     subprocess.run(cmake)
     subprocess.run(make)
     if env['platform'] == 'windows':
-        ext = "dll"
+        ext = "a"
     else:
         ext = "a"
     shutil.copy2("extensions/libcmark-gfm-extensions.{}".format(ext), lib_target_path)
