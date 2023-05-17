@@ -112,13 +112,13 @@ String Cmark::convert_markdown(const String &markdown) {
                     cmark_node_set_list_start(parent, list_start + 1);
                 }
                 else if (!is_tasklist) {
-                    converted = converted + "• ";
+                    converted = converted + String::utf8("• ");
                 }
                 else if (strcmp(tasklist_state, "checked") == 0) {
-                    converted = converted + "🔲 ";
+                    converted = converted + String::utf8("🔲 ");
                 }
                 else if (strcmp(tasklist_state, "unchecked") == 0) {
-                    converted = converted + "☑ ";
+                    converted = converted + String::utf8("☑ ");
                 }
             }
             else if (ev_type == CMARK_EVENT_EXIT) {
@@ -265,10 +265,25 @@ String Cmark::convert_markdown(const String &markdown) {
         }
 #endif
         else if(cur_type == CMARK_NODE_TABLE){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                converted = converted + "[table=";
+                converted = converted + String::num(cmark_gfm_extensions_get_table_columns(cur));
+                converted = converted + "]";
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                converted = converted + "[/table]\n";
+            }
         }
         else if(cur_type == CMARK_NODE_TABLE_ROW){
         }
         else if(cur_type == CMARK_NODE_TABLE_CELL){
+            if (ev_type == CMARK_EVENT_ENTER) {
+                converted = converted + "[cell]";
+                converted = converted + String::utf8(content);
+            }
+            else if (ev_type == CMARK_EVENT_EXIT) {
+                converted = converted + "[/cell]";
+            }
         }
         if (content != NULL && !content_handled) {
             converted = converted + String::utf8(content);

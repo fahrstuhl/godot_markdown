@@ -2,9 +2,14 @@ extends Control
 
 
 var markdown = """öäüß~~strikethrough text~~ literal text *italics text* __fat text__ __*fat italics text*__ [hello](https://github.com/fahrstuhl/godot_markdown/)
-soft linebreak
-hard linebreak  
-end of paragraph
+soft linebreak.
+hard linebreak.  
+end of paragraph.
+
+# Table
+| foo | bar |
+| --- | --- |
+| baz | bim |
 
 # yee
 
