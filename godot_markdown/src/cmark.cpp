@@ -101,7 +101,7 @@ String Cmark::convert_markdown(const String &markdown) {
                     converted = converted + "[indent]";
                 }
                 parent = cmark_node_parent(cur);
-                char* tasklist_state = cmark_gfm_extensions_get_tasklist_state(cur);
+                bool is_checked = cmark_gfm_extensions_get_tasklist_item_checked(cur);
                 bool is_tasklist = strcmp(cmark_node_get_type_string(cur), "tasklist") == 0;
                 if (parent != NULL
                         && cmark_node_get_type(parent) == CMARK_NODE_LIST
@@ -114,10 +114,10 @@ String Cmark::convert_markdown(const String &markdown) {
                 else if (!is_tasklist) {
                     converted = converted + String::utf8("• ");
                 }
-                else if (strcmp(tasklist_state, "checked") == 0) {
+                else if (is_checked) {
                     converted = converted + String::utf8("🔲 ");
                 }
-                else if (strcmp(tasklist_state, "unchecked") == 0) {
+                else if (!is_checked) {
                     converted = converted + String::utf8("☑ ");
                 }
             }
