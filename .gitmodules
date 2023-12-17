@@ -1,7 +1,0 @@
-[submodule "godot_markdown/thirdparty/cmark-gfm"]
-	path = godot_markdown/thirdparty/cmark-gfm
-	url = https://github.com/github/cmark-gfm.git
-    branch = releases/0.29.0.gfm.2
-[submodule "godot-cpp"]
-	path = godot-cpp
-	url = https://github.com/godotengine/godot-cpp.git
