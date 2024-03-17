@@ -226,13 +226,13 @@ where
                     self.write("\n[p][indent]\n")
                 }
             }
-            Tag::CodeBlock(info) => {
+            Tag::CodeBlock(_info) => {
                 if !self.end_newline {
                     self.write_newline()?;
                 }
                 self.write("[p][code]")
             }
-            Tag::List(Some(num)) => {
+            Tag::List(Some(_num)) => {
                 if self.end_newline {
                     self.write("[ol]\n")
                 } else {
@@ -259,7 +259,7 @@ where
             Tag::Link {
                 link_type: LinkType::Email,
                 dest_url,
-                title,
+                title: _,
                 id: _,
             } => {
                 self.write("[url=\"mailto:")?;
@@ -269,7 +269,7 @@ where
             Tag::Link {
                 link_type: _,
                 dest_url,
-                title,
+                title: _,
                 id: _,
             } => {
                 self.write("[url=\"")?;
@@ -279,7 +279,7 @@ where
             Tag::Image {
                 link_type: _,
                 dest_url,
-                title,
+                title: _,
                 id: _,
             } => {
                 self.write("[img]")?;
@@ -309,7 +309,7 @@ where
             TagEnd::Paragraph => {
                 self.write("\n")?;
             }
-            TagEnd::Heading(level) => {
+            TagEnd::Heading(_level) => {
                 self.write("[/font_size]\n")?;
             }
             TagEnd::Table => {
