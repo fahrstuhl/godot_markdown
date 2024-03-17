@@ -75,6 +75,7 @@ struct RichTextWriter<'a, I, W> {
     table_cell_index: usize,
     numbers: HashMap<CowStr<'a>, usize>,
     item_indicators: LinkedList<Option<u64>>,
+    in_item: bool,
 }
 
 impl<'a, I, W> RichTextWriter<'a, I, W>
@@ -92,6 +93,7 @@ where
             table_cell_index: 0,
             numbers: HashMap::new(),
             item_indicators: LinkedList::new(),
+            in_item: false,
         }
     }
 
@@ -133,6 +135,9 @@ where
                 }
                 SoftBreak => {
                     self.write_newline()?;
+                    if self.in_item {
+                        self.write("\t")?;
+                    }
                 }
                 HardBreak => {
                     self.write_newline()?;
@@ -236,36 +241,26 @@ where
             }
             Tag::List(Some(num)) => {
                 self.item_indicators.push_back(Some(num));
-                if self.end_newline {
-                    self.write("[indent]")
-                } else {
-                    self.write("[indent]")
-                }
+                self.write("[indent]")
             }
             Tag::List(None) => {
                 self.item_indicators.push_back(None);
-                if self.end_newline {
-                    self.write("[indent]")
-                } else {
-                    self.write("\n[indent]")
-                }
+                self.write("[indent]")
             }
             Tag::Item => {
+                self.in_item = true;
                 match self.item_indicators.pop_back() {
                     Some(Some(num)) => {
                         self.item_indicators.push_back(Some(num + 1));
-                        write!(&mut self.writer, "{}. ", num)?;
+                        write!(&mut self.writer, "{}.\t", num)
                     }
                     Some(None) => {
                         self.item_indicators.push_back(None);
-                        self.write("• ")?;
+                        self.write("•\t")
                     }
-                    None => {}
-                }
-                if !self.end_newline {
-                    self.write("")
-                } else {
-                    self.write("")
+                    None => {
+                        self.write("")
+                    }
                 }
             }
             Tag::Emphasis => self.write("[i]"),
@@ -359,6 +354,7 @@ where
                 self.write("[/indent]")?;
             }
             TagEnd::Item => {
+                self.in_item = false;
                 self.write("\n")?;
             }
             TagEnd::Emphasis => {
