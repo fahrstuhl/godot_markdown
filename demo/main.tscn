@@ -1,11 +1,11 @@
 [gd_scene load_steps=7 format=3 uid="uid://cl61nxq8e62m"]
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
-[ext_resource type="FontFile" path="res://fonts/NotoSans-Regular.tres" id="2"]
-[ext_resource type="FontFile" path="res://fonts/NotoSans-Italics.tres" id="3"]
-[ext_resource type="FontFile" path="res://fonts/NotoSans-BoldItalics.tres" id="4"]
-[ext_resource type="FontFile" path="res://fonts/NotoSans-Bold.tres" id="5"]
-[ext_resource type="FontFile" path="res://fonts/NotoSansMono-Regular.tres" id="6"]
+[ext_resource type="FontFile" uid="uid://bqmtquc34rbqy" path="res://fonts/Noto_Sans/NotoSans-Regular.ttf" id="2_5eyv8"]
+[ext_resource type="FontFile" uid="uid://bmwveyath0vd4" path="res://fonts/Noto_Sans/NotoSans-Bold.ttf" id="3_cnoxe"]
+[ext_resource type="FontFile" uid="uid://bnagvsbtcx1jn" path="res://fonts/Noto_Sans/NotoSans-Italic.ttf" id="4_w1snw"]
+[ext_resource type="FontFile" uid="uid://b2cc1gaca5ntq" path="res://fonts/Noto_Sans/NotoSans-BoldItalic.ttf" id="5_075ml"]
+[ext_resource type="FontFile" uid="uid://d2x4i6wqxy25h" path="res://fonts/NotoSansMono-hinted/NotoSansMono-Regular.ttf" id="6_ep6of"]
 
 [node name="main" type="PanelContainer"]
 anchors_preset = 15
@@ -22,83 +22,89 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_fonts/normal_font = ExtResource("2")
-theme_override_fonts/bold_font = ExtResource("5")
-theme_override_fonts/italics_font = ExtResource("3")
-theme_override_fonts/bold_italics_font = ExtResource("4")
-theme_override_fonts/mono_font = ExtResource("6")
+focus_mode = 2
+theme_override_fonts/normal_font = ExtResource("2_5eyv8")
+theme_override_fonts/bold_font = ExtResource("3_cnoxe")
+theme_override_fonts/italics_font = ExtResource("4_w1snw")
+theme_override_fonts/bold_italics_font = ExtResource("5_075ml")
+theme_override_fonts/mono_font = ExtResource("6_ep6of")
 bbcode_enabled = true
+context_menu_enabled = true
+selection_enabled = true
 
 [node name="RichTextLabel" type="RichTextLabel" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_fonts/normal_font = ExtResource("2")
-theme_override_fonts/bold_font = ExtResource("5")
-theme_override_fonts/italics_font = ExtResource("3")
-theme_override_fonts/bold_italics_font = ExtResource("4")
-theme_override_fonts/mono_font = ExtResource("6")
-theme_override_font_sizes/normal_font_size = 16
-theme_override_font_sizes/bold_font_size = 16
-theme_override_font_sizes/italics_font_size = 16
-theme_override_font_sizes/bold_italics_font_size = 16
-theme_override_font_sizes/mono_font_size = 16
+focus_mode = 2
+theme_override_fonts/normal_font = ExtResource("2_5eyv8")
+theme_override_fonts/bold_font = ExtResource("3_cnoxe")
+theme_override_fonts/italics_font = ExtResource("4_w1snw")
+theme_override_fonts/bold_italics_font = ExtResource("5_075ml")
+theme_override_fonts/mono_font = ExtResource("6_ep6of")
 bbcode_enabled = true
 text = "öäüß [s]strikethrough text[/s] literal text [i]italics text[/i] [b]fat text[/b] [b][i]fat italics text[/i][/b] [url=\"https://github.com/fahrstuhl/godot_markdown/\"]hello[/url]
 soft linebreak.
 hard linebreak.
 
 end of paragraph.
+
 [font_size=32]Table[/font_size]
+
 [table=4][cell border=white]foo[/cell][cell border=white]bar[/cell][cell border=white]bims[/cell][cell border=white]bums[/cell]
 [cell border=white]baz[/cell][cell border=white]bim[/cell][cell border=white]bengi[/cell][cell border=white]bangl[/cell]
 [/table]
+
 [font_size=32]yee[/font_size]
-[ul]
-test
-toast
-[/ul]
+
+ •	test
+ •	toast
+
 [font_size=10]tasklist[/font_size]
-[ul]
-☑ yee
-🔲 nee
-🔲 www.autolink.example
-[/ul]
+
+ •	☑ yee
+ •	☐ nee
+ •	☐ www.autolink.example
+
 hallo welt
 paragraph
-
-
-[p][indent]
-block quote
-[/indent][/p]
-paragraph
-paragraph
-[url=\"file:///tmp\"]file:///tmp[/url]
-[ol]
-hello
-world
-[ol]
-even nested lists
-are working
-[/ol]
-lists
-are working
-[p]
-List item one.
-List item one continued with a second paragraph followed by an
-Indented block.
 [indent]
-$ ls *.sh
-$ mv *.sh ~/tmp
+block quote
 [/indent]
-List item continued with a third paragraph.
-[/p]
-List item two continued with an open block.
-This paragraph is part of the preceding list item.
-[ol]
-This list is nested and does not require explicit item continuation.
-This paragraph is part of the preceding list item.
-[/ol]
+paragraph
+[code]
+code
+more
+[/code]
+paragraph
 
-[/ol]
+paragraph
+
+[url=\"file:///tmp\"]file:///tmp[/url]
+
+1.	hello
+2.	world
+[indent][indent] •	even nested lists[/indent][/indent]
+[indent][indent] •	are working[/indent][/indent]
+3.	lists
+4.	are working
+5.	List item one.
+	List item one [code]continued[/code] with a second paragraph followed by an
+	Indented block.
+	$ ls *.sh
+	$ mv *.sh ~/tmp
+	List item continued with a third paragraph.
+6.	List item two continued with an open block.
+	This paragraph is part of the preceding list item.
+[indent][indent]1.	This list is nested and does not require explicit item continuation.
+	This paragraph is part of the preceding list item.[/indent][/indent]
+ •	test
+	toast
+
+test
+
+[center]────────────[/center]
+
 [s]strikethrough text[/s] literal text [i]italics text[/i] [b]fat text[/b] [b][i]fat italics text[/i][/b] [url=\"https://github.com/fahrstuhl/godot_markdown/\"]hello[/url]
 uiaenrtdüöä"
+context_menu_enabled = true
+selection_enabled = true
