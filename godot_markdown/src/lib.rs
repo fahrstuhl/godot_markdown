@@ -240,12 +240,18 @@ where
                 self.write("[p][code]")
             }
             Tag::List(Some(num)) => {
+                if !self.item_indicators.is_empty() {
+                    self.write("[indent][indent]")?;
+                }
                 self.item_indicators.push_back(Some(num));
-                self.write("[indent]")
+                self.write("")
             }
             Tag::List(None) => {
+                if !self.item_indicators.is_empty() {
+                    self.write("[indent][indent]")?;
+                }
                 self.item_indicators.push_back(None);
-                self.write("[indent]")
+                self.write("")
             }
             Tag::Item => {
                 self.in_item = true;
@@ -351,7 +357,9 @@ where
             }
             TagEnd::List(_) => {
                 self.item_indicators.pop_back();
-                self.write("[/indent]")?;
+                if !self.item_indicators.is_empty() {
+                    self.write("[/indent][/indent]")?;
+                }
             }
             TagEnd::Item => {
                 self.in_item = false;
