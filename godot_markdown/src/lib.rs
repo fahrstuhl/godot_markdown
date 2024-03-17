@@ -280,7 +280,7 @@ where
                     }
                     Some(None) => {
                         self.item_indicators.push_back(None);
-                        self.write("•\t")?;
+                        self.write(" •\t")?;
                     }
                     None => {
                     }
