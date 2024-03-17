@@ -163,7 +163,7 @@ where
                     self.write("☑ ")?;
                 }
                 TaskListMarker(false) => {
-                    self.write("🔲 ")?;
+                    self.write("☐ ")?;
                 }
             }
         }
