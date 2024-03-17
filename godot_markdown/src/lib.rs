@@ -2,7 +2,7 @@ use godot::prelude::*;
 use pulldown_cmark::Event::*;
 use pulldown_cmark::{Alignment, CowStr, Event, LinkType, Options, Parser, Tag, TagEnd};
 use pulldown_cmark_escape::{escape_href, escape_html, StrWrite};
-use std::collections::HashMap;
+use std::collections::{HashMap, LinkedList};
 use std::io::{self};
 
 struct GodotMarkdown;
@@ -74,6 +74,7 @@ struct RichTextWriter<'a, I, W> {
     table_alignments: Vec<Alignment>,
     table_cell_index: usize,
     numbers: HashMap<CowStr<'a>, usize>,
+    item_indicators: LinkedList<Option<u64>>,
 }
 
 impl<'a, I, W> RichTextWriter<'a, I, W>
@@ -90,6 +91,7 @@ where
             table_alignments: vec![],
             table_cell_index: 0,
             numbers: HashMap::new(),
+            item_indicators: LinkedList::new(),
         }
     }
 
@@ -138,9 +140,9 @@ where
                 }
                 Rule => {
                     if self.end_newline {
-                        self.write("\n\n")?;
+                        self.write("\n")?;
                     } else {
-                        self.write("\n\n\n")?;
+                        self.write("\n\n")?;
                     }
                 }
                 FootnoteReference(name) => {
@@ -232,23 +234,36 @@ where
                 }
                 self.write("[p][code]")
             }
-            Tag::List(Some(_num)) => {
+            Tag::List(Some(num)) => {
+                self.item_indicators.push_back(Some(num));
                 if self.end_newline {
-                    self.write("[ol]\n")
+                    self.write("[indent]")
                 } else {
-                    self.write("\n[ol]\n")
+                    self.write("[indent]")
                 }
             }
             Tag::List(None) => {
+                self.item_indicators.push_back(None);
                 if self.end_newline {
-                    self.write("[ul]\n")
+                    self.write("[indent]")
                 } else {
-                    self.write("\n[ul]\n")
+                    self.write("\n[indent]")
                 }
             }
             Tag::Item => {
+                match self.item_indicators.pop_back() {
+                    Some(Some(num)) => {
+                        self.item_indicators.push_back(Some(num + 1));
+                        write!(&mut self.writer, "{}. ", num)?;
+                    }
+                    Some(None) => {
+                        self.item_indicators.push_back(None);
+                        self.write("• ")?;
+                    }
+                    None => {}
+                }
                 if !self.end_newline {
-                    self.write("\n")
+                    self.write("")
                 } else {
                     self.write("")
                 }
@@ -339,11 +354,9 @@ where
             TagEnd::CodeBlock => {
                 self.write("[/code][/p]\n")?;
             }
-            TagEnd::List(true) => {
-                self.write("[/ol]\n")?;
-            }
-            TagEnd::List(false) => {
-                self.write("[/ul]\n")?;
+            TagEnd::List(_) => {
+                self.item_indicators.pop_back();
+                self.write("[/indent]")?;
             }
             TagEnd::Item => {
                 self.write("\n")?;
