@@ -145,10 +145,12 @@ where
                 }
                 Rule => {
                     if self.end_newline {
-                        self.write("\n")?;
+                        self.write_newline()?;
                     } else {
-                        self.write("\n\n")?;
+                        self.write_newline()?;
+                        self.write_newline()?;
                     }
+                    self.write("[center]────────────[/center]\n\n")?;
                 }
                 FootnoteReference(name) => {
                     let len = self.numbers.len() + 1;
