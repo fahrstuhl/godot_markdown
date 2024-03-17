@@ -70,6 +70,7 @@ struct RichTextWriter<'a, I, W> {
     writer: W,
     /// Whether or not the last write wrote a newline.
     end_newline: bool,
+    end_double_newline: bool,
     table_state: TableState,
     table_alignments: Vec<Alignment>,
     table_cell_index: usize,
@@ -88,6 +89,7 @@ where
             iter,
             writer,
             end_newline: true,
+            end_double_newline: true,
             table_state: TableState::Head,
             table_alignments: vec![],
             table_cell_index: 0,
@@ -98,6 +100,7 @@ where
     }
 
     fn write_newline(&mut self) -> io::Result<()> {
+        self.end_double_newline = self.end_newline;
         self.end_newline = true;
         self.writer.write_str("\n")
     }
@@ -108,7 +111,9 @@ where
         self.writer.write_str(s)?;
 
         if !s.is_empty() {
-            self.end_newline = s.ends_with('\n');
+            let is_newline = s.ends_with('\n');
+            self.end_double_newline = self.end_newline && is_newline;
+            self.end_newline = is_newline;
         }
         Ok(())
     }
@@ -176,10 +181,12 @@ where
     fn start_tag(&mut self, tag: Tag<'a>) -> io::Result<()> {
         match tag {
             Tag::Paragraph => {
-                if self.end_newline {
+                if self.end_double_newline { // the first paragraph mustn't start with a newline
                     self.write("")
-                } else {
+                } else if self.end_newline {
                     self.write("\n")
+                } else {
+                    self.write("\n\n")
                 }
             }
             Tag::Heading {
@@ -189,17 +196,16 @@ where
                 attrs: _,
             } => {
                 if self.end_newline {
-                    self.end_newline = false;
-                    self.write("[{")?;
-                } else {
                     self.write("\n[{")?;
+                } else {
+                    self.write("\n\n[{")?;
                 }
                 write!(&mut self.writer, "font_size={}", level)?;
                 self.write("}]")
             }
             Tag::Table(alignments) => {
                 self.table_alignments = alignments;
-                self.write("[table=")?;
+                self.write("\n[table=")?;
                 write!(&mut self.writer, "{}", self.table_alignments.len())?;
                 self.write("]")
             }
@@ -230,46 +236,57 @@ where
             }
             Tag::BlockQuote => {
                 if self.end_newline {
-                    self.write("[p][indent]\n")
+                    self.write("[indent]")?;
                 } else {
-                    self.write("\n[p][indent]\n")
+                    self.write("\n[indent]")?;
                 }
+                self.end_newline = true;
+                Ok(())
             }
             Tag::CodeBlock(_info) => {
                 if !self.end_newline {
                     self.write_newline()?;
                 }
-                self.write("[p][code]")
+                self.write("[code]\n")
             }
             Tag::List(Some(num)) => {
-                if !self.item_indicators.is_empty() {
-                    self.write("[indent][indent]")?;
+                if self.item_indicators.is_empty() {
+                    self.write_newline()?;
                 }
                 self.item_indicators.push_back(Some(num));
                 self.write("")
             }
             Tag::List(None) => {
-                if !self.item_indicators.is_empty() {
-                    self.write("[indent][indent]")?;
+                if self.item_indicators.is_empty() {
+                    self.write_newline()?;
                 }
                 self.item_indicators.push_back(None);
                 self.write("")
             }
             Tag::Item => {
                 self.in_item = true;
+                if self.end_newline {
+                    self.write("")?;
+                } else {
+                    self.write("\n")?;
+                }
+                if self.item_indicators.len() > 1 {
+                    self.write("[indent][indent]")?;
+                }
                 match self.item_indicators.pop_back() {
                     Some(Some(num)) => {
                         self.item_indicators.push_back(Some(num + 1));
-                        write!(&mut self.writer, "{}.\t", num)
+                        write!(&mut self.writer, "{}.\t", num)?;
                     }
                     Some(None) => {
                         self.item_indicators.push_back(None);
-                        self.write("•\t")
+                        self.write("•\t")?;
                     }
                     None => {
-                        self.write("")
                     }
                 }
+                self.end_double_newline = true; // TODO: wait for pulldown to signify loose/tight lists
+                Ok(())
             }
             Tag::Emphasis => self.write("[i]"),
             Tag::Strong => self.write("[b]"),
@@ -352,20 +369,21 @@ where
                 self.table_cell_index += 1;
             }
             TagEnd::BlockQuote => {
-                self.write("[/indent][/p]\n")?;
+                self.write("[/indent]")?;
+                self.end_newline = true;
             }
             TagEnd::CodeBlock => {
-                self.write("[/code][/p]\n")?;
+                self.write("[/code]")?;
+                self.end_newline = true;
             }
             TagEnd::List(_) => {
                 self.item_indicators.pop_back();
-                if !self.item_indicators.is_empty() {
-                    self.write("[/indent][/indent]")?;
-                }
             }
             TagEnd::Item => {
                 self.in_item = false;
-                self.write("\n")?;
+                if self.item_indicators.len() > 1 {
+                    self.write("[/indent][/indent]")?;
+                }
             }
             TagEnd::Emphasis => {
                 self.write("[/i]")?;
