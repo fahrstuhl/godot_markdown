@@ -13,5 +13,5 @@ static func convert_markdown(text):
 	}
 	var bbcode_text = cmark.convert_markdown(text)
 	bbcode_text = bbcode_text.format(heading_sizes)
-	print(bbcode_text)
+	print_verbose(bbcode_text)
 	return bbcode_text
