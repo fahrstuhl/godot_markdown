@@ -181,7 +181,8 @@ where
     fn start_tag(&mut self, tag: Tag<'a>) -> io::Result<()> {
         match tag {
             Tag::Paragraph => {
-                if self.end_double_newline { // the first paragraph mustn't start with a newline
+                if self.end_double_newline {
+                    // the first paragraph mustn't start with a newline
                     self.write("")
                 } else if self.end_newline {
                     self.write("\n")
@@ -282,8 +283,7 @@ where
                         self.item_indicators.push_back(None);
                         self.write(" •\t")?;
                     }
-                    None => {
-                    }
+                    None => {}
                 }
                 self.end_double_newline = true; // TODO: wait for pulldown to signify loose/tight lists
                 Ok(())
