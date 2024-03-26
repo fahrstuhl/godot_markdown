@@ -1,7 +1,7 @@
 use godot::prelude::*;
 use pulldown_cmark::Event::*;
 use pulldown_cmark::{Alignment, CowStr, Event, LinkType, Options, Parser, Tag, TagEnd};
-use pulldown_cmark_escape::{escape_href, escape_html, StrWrite};
+use pulldown_cmark_escape::{escape_html, StrWrite};
 use std::collections::{HashMap, LinkedList};
 use std::io::{self};
 
@@ -298,7 +298,7 @@ where
                 id: _,
             } => {
                 self.write("[url=\"mailto:")?;
-                escape_href(&mut self.writer, &dest_url)?;
+                write!(&mut self.writer, "{}", &dest_url)?;
                 self.write("\"]")
             }
             Tag::Link {
@@ -308,7 +308,7 @@ where
                 id: _,
             } => {
                 self.write("[url=\"")?;
-                escape_href(&mut self.writer, &dest_url)?;
+                write!(&mut self.writer, "{}", &dest_url)?;
                 self.write("\"]")
             }
             Tag::Image {
@@ -318,7 +318,7 @@ where
                 id: _,
             } => {
                 self.write("[img]")?;
-                escape_href(&mut self.writer, &dest_url)?;
+                write!(&mut self.writer, "{}", &dest_url)?;
                 self.write("[/img]")
             }
             Tag::FootnoteDefinition(name) => {
