@@ -24,7 +24,7 @@ $(platforms):
 	cp $(TARGET_DIR)/$@/release/$(lib) $(LIB_DIR)/$@/release/
 
 $(ZIP_FILE):
-	zip $@ addons -x "*/.*"
+	zip -r $@ addons -x "*/.*"
 
 clean:
 	rm -rf $(LIB_DIR)
