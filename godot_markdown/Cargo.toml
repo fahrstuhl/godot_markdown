@@ -7,6 +7,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-pulldown-cmark = "0.10.0"
+pulldown-cmark = "0.10.2"
 pulldown-cmark-escape = "0.10.0"
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master" }
