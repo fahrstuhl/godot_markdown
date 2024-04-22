@@ -23,7 +23,7 @@ $(platforms):
 	cp $(TARGET_DIR)/$@/debug/$(lib) $(LIB_DIR)/$@/debug/
 	cp $(TARGET_DIR)/$@/release/$(lib) $(LIB_DIR)/$@/release/
 
-$(ZIP_FILE):
+$(ZIP_FILE): $(platforms)
 	zip -r $@ addons -x "*/.*"
 
 clean:
