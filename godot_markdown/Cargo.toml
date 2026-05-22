@@ -1,6 +1,6 @@
 [package]
 name = "godot_markdown"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 pulldown-cmark = "0.10.2"
 pulldown-cmark-escape = "0.10.0"
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master" }
+rushdown = "0.18.0"
