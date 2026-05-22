@@ -14,25 +14,25 @@ unsafe impl ExtensionLibrary for GodotMarkdown {}
 #[class(init,base=Node)]
 struct Cmark {
     base: Base<Node>,
-    #[init(default = 16)]
+    #[init(val = 16)]
     #[export]
     font_size: i64,
-    #[init(default = 2.0)]
+    #[init(val = 2.0)]
     #[export]
     h1_size: f64,
-    #[init(default = 1.5)]
+    #[init(val = 1.5)]
     #[export]
     h2_size: f64,
-    #[init(default = 1.17)]
+    #[init(val = 1.17)]
     #[export]
     h3_size: f64,
-    #[init(default = 1.0)]
+    #[init(val = 1.0)]
     #[export]
     h4_size: f64,
-    #[init(default = 0.83)]
+    #[init(val = 0.83)]
     #[export]
     h5_size: f64,
-    #[init(default = 0.67)]
+    #[init(val = 0.67)]
     #[export]
     h6_size: f64,
 }
