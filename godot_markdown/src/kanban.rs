@@ -1,15 +1,46 @@
-use godot::classes::class_macros::sys::known_virtual_hashes::VisualShaderNodeCustom::get_return_icon_type;
+use godot::prelude::Node as GDNode;
 use godot::prelude::*;
 use rushdown::parser::Parser as RDParser;
 use rushdown::parser::GfmOptions;
 use rushdown::ast::Node as RDNode;
-use rushdown::{as_kind_data, ast::*};
-use rushdown::text::{BasicReader,Segment};
+use rushdown::ast::*;
+use rushdown::text::{BasicReader};
 use rushdown::matches_kind;
 
 #[derive(GodotClass)]
-#[class(no_init)]
+#[class(init, base=Resource)]
 struct KanbanDocument {
+    base: Base<Resource>,
+    root: NodeRef,
+    arena: Arena,
+    #[var]
+    source: GString,
+    #[var]
+    projects: Array<Variant>,
+}
+
+#[derive(GodotClass)]
+#[class(init, base=Resource)]
+struct KanbanProject {
+    node_ref: NodeRef,
+    base: Base<Resource>,
+    #[var]
+    task: Array<Variant>,
+    #[var]
+    statuses: Array<StringName>,
+}
+
+#[derive(GodotClass)]
+#[class(init, base=Resource)]
+struct KanbanTask {
+    node_ref: NodeRef,
+    base: Base<Resource>,
+    #[var]
+    done: bool,
+    #[var]
+    text: GString,
+    #[var]
+    status: StringName,
 }
 
 #[derive(Debug, Clone)]
