@@ -8,7 +8,7 @@ use rushdown::text::{BasicReader};
 use rushdown::matches_kind;
 
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(base=Resource)]
 struct KanbanDocument {
     base: Base<Resource>,
     root: NodeRef,
@@ -55,13 +55,27 @@ impl std::fmt::Display for WalkerError {
 impl std::error::Error for WalkerError {}
 
 #[godot_api]
+impl IResource for KanbanDocument {
+    fn init(base: Base<Resource>) ->Self {
+        Self {
+            base,
+            root: NodeRef::default(),
+            arena: Arena::default(),
+            source: GString::default(),
+            projects: Array::default(),
+        }
+    }
+}
+
+#[godot_api]
 impl KanbanDocument {
-    fn find_kanbanizable_tasklist(self, source: &str) {
+    fn find_kanbanizable_tasklist(mut self) {
         let parser = RDParser::with_extensions(rushdown::parser::Options::default(), rushdown::parser::gfm(GfmOptions::default()));
+        let source = &self.source.to_string();
         let mut reader = BasicReader::new(source);
-        let (arena, document_ref)  = parser.parse(&mut reader);
+        (self.arena, self.root) = parser.parse(&mut reader);
         let mut projects = Vec::new();
-        walk(&arena, document_ref, &mut |arena: &Arena,
+        walk(&self.arena, self.root, &mut |arena: &Arena,
             node_ref: NodeRef,
             entering: bool| -> Result<WalkStatus, WalkerError> {
                 if entering {
@@ -107,14 +121,14 @@ impl KanbanDocument {
             return
         }
         projects.iter().for_each(|&p_ref| {
-            match arena[p_ref].first_child() {
+            match self.arena[p_ref].first_child() {
                 None => (),
                 Some(para_ref) => {
-                    match arena[para_ref].kind_data() {
+                    match self.arena[para_ref].kind_data() {
                         KindData::Paragraph(_) => {
                             print!("Project name: ");
-                            arena[para_ref].children(&arena).for_each(|c| {
-                                match arena[c].kind_data() {
+                            self.arena[para_ref].children(&self.arena).for_each(|c| {
+                                match self.arena[c].kind_data() {
                                     KindData::Text(text) => print!("{}", text.str(source)),
                                     _ => ()
                                 }
