@@ -9,8 +9,7 @@ use rushdown::matches_kind;
 
 #[derive(GodotClass)]
 #[class(no_init)]
-struct Kanban {
-    // base: Base<GDNode>
+struct KanbanDocument {
 }
 
 #[derive(Debug, Clone)]
@@ -25,44 +24,8 @@ impl std::fmt::Display for WalkerError {
 impl std::error::Error for WalkerError {}
 
 #[godot_api]
-impl Kanban {
-    fn find_kanbanizable_tasklist(self) {
-        let source = r#"
-* project 1
-  * doing
-    * [ ] task 1 
-  * to do
-    * [ ] task 2 
-  * backlog
-    * [ ] task 3
-    * [ ] task 4
-  * done
-    * [x] task 5
-* project 2
-  * doing
-    * [ ] aufgabe 1 
-  * to do
-    * [ ] aufgabe 2 
-  * backlog
-    * [ ] aufgabe 3
-    * [ ] aufgabe 4
-  * done
-    * [x] aufgabe 5
-
-paragraph to break list
-
-* project after break and with lots of text
-  and even a newline because lmao
-  * doing
-    * [ ] task 1 
-  * to do
-    * [ ] task 2 
-  * backlog
-    * [ ] task 3
-    * [ ] task 4
-  * done
-    * [x] task 5
-        "#;
+impl KanbanDocument {
+    fn find_kanbanizable_tasklist(self, source: &str) {
         let parser = RDParser::with_extensions(rushdown::parser::Options::default(), rushdown::parser::gfm(GfmOptions::default()));
         let mut reader = BasicReader::new(source);
         let (arena, document_ref)  = parser.parse(&mut reader);
@@ -145,11 +108,47 @@ paragraph to break list
 
 #[cfg(test)]
 mod test {
-    use crate::kanban::Kanban;
+    use crate::kanban::KanbanDocument;
 
     #[test]
     fn print_found_lists() {
-        let k = Kanban{};
-        k.find_kanbanizable_tasklist();
+        let source = r#"
+* project 1
+  * doing
+    * [ ] task 1 
+  * to do
+    * [ ] task 2 
+  * backlog
+    * [ ] task 3
+    * [ ] task 4
+  * done
+    * [x] task 5
+* project 2
+  * doing
+    * [ ] aufgabe 1 
+  * to do
+    * [ ] aufgabe 2 
+  * backlog
+    * [ ] aufgabe 3
+    * [ ] aufgabe 4
+  * done
+    * [x] aufgabe 5
+
+paragraph to break list
+
+* project after break and with lots of text
+  and even a newline because lmao
+  * doing
+    * [ ] task 1 
+  * to do
+    * [ ] task 2 
+  * backlog
+    * [ ] task 3
+    * [ ] task 4
+  * done
+    * [x] task 5
+        "#;
+        let k = KanbanDocument{};
+        k.find_kanbanizable_tasklist(source);
     }
 }
