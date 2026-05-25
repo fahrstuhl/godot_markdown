@@ -8,7 +8,7 @@ use rushdown::text::{BasicReader};
 use rushdown::matches_kind;
 
 #[derive(GodotClass)]
-#[class(base=Resource)]
+#[class(init, base=Resource)]
 struct KanbanDocument {
     base: Base<Resource>,
     root: NodeRef,
@@ -16,16 +16,18 @@ struct KanbanDocument {
     #[var]
     source: GString,
     #[var]
-    projects: Array<Variant>,
+    projects: Array<Gd<KanbanProject>>,
 }
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
 struct KanbanProject {
-    node_ref: NodeRef,
     base: Base<Resource>,
+    node_ref: NodeRef,
     #[var]
-    task: Array<Variant>,
+    name: GString,
+    #[var]
+    tasks: Array<Variant>,
     #[var]
     statuses: Array<StringName>,
 }
@@ -33,8 +35,8 @@ struct KanbanProject {
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
 struct KanbanTask {
-    node_ref: NodeRef,
     base: Base<Resource>,
+    node_ref: NodeRef,
     #[var]
     done: bool,
     #[var]
@@ -55,90 +57,48 @@ impl std::fmt::Display for WalkerError {
 impl std::error::Error for WalkerError {}
 
 #[godot_api]
-impl IResource for KanbanDocument {
-    fn init(base: Base<Resource>) ->Self {
-        Self {
-            base,
-            root: NodeRef::default(),
-            arena: Arena::default(),
-            source: GString::default(),
-            projects: Array::default(),
-        }
-    }
-}
-
-#[godot_api]
 impl KanbanDocument {
-    fn find_kanbanizable_tasklist(mut self) {
+
+    #[func]
+    fn from_markdown_text(text: GString) -> Gd<Self> {
+        Gd::from_init_fn(|base| {
+            let mut doc = Self {base,
+               root: NodeRef::default(),
+               arena: Arena::default(),
+               source: text,
+               projects: Array::default(),
+            };
+            doc.find_kanbanizable_tasklist();
+            doc
+        })
+    }
+
+    fn find_kanbanizable_tasklist(&mut self) {
         let parser = RDParser::with_extensions(rushdown::parser::Options::default(), rushdown::parser::gfm(GfmOptions::default()));
         let source = &self.source.to_string();
         let mut reader = BasicReader::new(source);
         (self.arena, self.root) = parser.parse(&mut reader);
-        let mut projects = Vec::new();
+        let mut project_list = Vec::new();
         walk(&self.arena, self.root, &mut |arena: &Arena,
             node_ref: NodeRef,
             entering: bool| -> Result<WalkStatus, WalkerError> {
                 if entering {
-                    if !matches_kind!(arena, node_ref, List) {
+                    if !matches_kind!(arena, node_ref, ListItem) {
                         return Ok(WalkStatus::Continue)
                     }
-                    let status_list = Self::get_first_child_list(arena, node_ref);
-                    if status_list.is_none() {
+                    if !Self::is_project(&self.arena, node_ref) {
                         return Ok(WalkStatus::Continue)
                     }
-                    let status_list = status_list.unwrap();
-                    let task_list = Self::get_first_child_list(arena, status_list);
-                    if task_list.is_none() {
-                        return Ok(WalkStatus::Continue)
-                    }
-                    let task_list = task_list.unwrap();
-                    let item_ref = arena[task_list].first_child();
-                    if item_ref.is_none() {
-                        return Ok(WalkStatus::Continue)
-                    }
-                    let item_ref = item_ref.unwrap();
-
-                    match arena[item_ref].kind_data() {
-                        KindData::ListItem(task) => {
-                            if !task.is_task() {
-                                return Ok(WalkStatus::Continue);
-                            }
-                            let project = arena[node_ref].first_child();
-                            if project.is_none() {
-                                return Ok(WalkStatus::Continue)
-                            }
-                            let project = project.unwrap();
-                            projects.push(project);
-                            println!("found project!");
-                        }
-                        _ => (),
-                    }
-                }
+                    project_list.push(node_ref);
+            }
                 Ok(WalkStatus::Continue)
             }).ok();
-        if projects.is_empty() {
-            println!("no projects found");
+        if project_list.is_empty() {
             return
         }
-        projects.iter().for_each(|&p_ref| {
-            match self.arena[p_ref].first_child() {
-                None => (),
-                Some(para_ref) => {
-                    match self.arena[para_ref].kind_data() {
-                        KindData::Paragraph(_) => {
-                            print!("Project name: ");
-                            self.arena[para_ref].children(&self.arena).for_each(|c| {
-                                match self.arena[c].kind_data() {
-                                    KindData::Text(text) => print!("{}", text.str(source)),
-                                    _ => ()
-                                }
-                            });
-                            println!();
-                        }
-                        _ => ()
-                    }
-                }
-            }
+        project_list.iter().for_each(|&p_ref| {
+            let project = KanbanProject::from_ast(&self.arena, p_ref, source);
+            self.projects.push(&project);
         });
     }
 
@@ -149,10 +109,56 @@ impl KanbanDocument {
         let mut children = arena[item].children_mut(arena);
         children.find(|&s| matches_kind!(arena, s, List))
     }
+
+    fn is_project(arena: &Arena, list_item_ref: NodeRef) -> bool {
+        let mut children = arena[list_item_ref].children_mut(arena);
+        let Some(status_list) = children.find(|&s| matches_kind!(arena, s, List)) else { return false };
+        let Some(task_list) = Self::get_first_child_list(arena, status_list) else { return false };
+        let Some(item_ref) = arena[task_list].first_child() else { return false };
+        let KindData::ListItem(task) = arena[item_ref].kind_data() else { return false };
+        task.is_task()
+    }
+}
+
+#[godot_api]
+impl KanbanProject {
+    fn from_ast(arena: &Arena, project_ref: NodeRef, source: &String) -> Gd<Self> {
+        Gd::from_init_fn(|base| {
+            let mut project = Self {
+                base: base,
+                name: GString::default(),
+                node_ref: project_ref,
+                tasks: Array::default(),
+                statuses: Array::default(),
+            };
+            match arena[project.node_ref].first_child() {
+                None => (),
+                Some(para_ref) => {
+                    let mut name: String = "".to_owned();
+                    match arena[para_ref].kind_data() {
+                        KindData::Paragraph(_) => {
+                            arena[para_ref].children(&arena).for_each(|c| {
+                                match arena[c].kind_data() {
+                                    KindData::Text(text) => name.push_str(text.str(source)),
+                                    _ => ()
+                                }
+                            });
+                            project.name = name.into();
+                        }
+                        _ => ()
+                    }
+                }
+            }
+            project
+        })
+    }
+
 }
 
 #[cfg(test)]
 mod test {
+    use godot::{classes::Resource, obj::{Base, Gd, NewGd}};
+
     use crate::kanban::KanbanDocument;
 
     #[test]
@@ -193,7 +199,7 @@ paragraph to break list
   * done
     * [x] task 5
         "#;
-        let k = KanbanDocument{};
+        let k = KanbanDocument::init();
         k.find_kanbanizable_tasklist(source);
     }
 }

@@ -15,3 +15,6 @@ static func convert_markdown(text):
 	bbcode_text = bbcode_text.format(heading_sizes)
 	print_verbose(bbcode_text)
 	return bbcode_text
+
+static func convert_kanban(text: String) -> KanbanDocument:
+	return KanbanDocument.from_markdown_text(text)
