@@ -1,6 +1,4 @@
-use godot::prelude::Node as GDNode;
 use godot::prelude::*;
-use rushdown::ast::Node as RDNode;
 use rushdown::ast::*;
 use rushdown::matches_kind;
 use rushdown::parser::GfmOptions;
@@ -17,6 +15,8 @@ struct KanbanDocument {
     source: GString,
     #[var]
     projects: Array<Gd<KanbanProject>>,
+    #[var]
+    status_order: Array<StringName>,
 }
 
 #[derive(GodotClass)]
@@ -56,6 +56,64 @@ impl std::fmt::Display for WalkerError {
 
 impl std::error::Error for WalkerError {}
 
+#[derive(Eq, PartialEq, Hash)]
+enum StatusLevel {
+    Backlog,
+    Todo,
+    Doing,
+    Done,
+    Other,
+}
+
+#[derive(Eq, PartialEq, Hash)]
+struct Status {
+    level: StatusLevel,
+    name: StringName,
+}
+
+impl Status {
+    fn enum_index(&self) -> u8 {
+        match self.level {
+            StatusLevel::Backlog => 0,
+            StatusLevel::Todo => 1,
+            StatusLevel::Doing => 2,
+            StatusLevel::Other => 3,
+            StatusLevel::Done => 4,
+        }
+    }
+}
+
+impl From<StringName> for Status {
+    fn from(name: StringName) -> Self {
+        let level: StatusLevel;
+        let lname = name.to_lower();
+        if lname.contains("todo") | lname.contains("to do") {
+            level = StatusLevel::Todo;
+        } else if lname.contains("done") | lname.contains("complete") {
+            level = StatusLevel::Done;
+        } else if lname.contains("doing") | lname.contains("progress") {
+            level = StatusLevel::Doing;
+        } else if lname.contains("backlog") {
+            level = StatusLevel::Backlog;
+        } else {
+            level = StatusLevel::Other;
+        }
+        Status { level, name }
+    }
+}
+
+impl Ord for Status {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.enum_index().cmp(&other.enum_index())
+    }
+}
+
+impl PartialOrd for Status {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
 #[godot_api]
 impl KanbanDocument {
     #[func]
@@ -67,8 +125,23 @@ impl KanbanDocument {
                 arena: Arena::default(),
                 source: text,
                 projects: Array::default(),
+                status_order: Array::default(),
             };
             doc.find_kanbanizable_tasklist();
+            let mut all_statuses = std::collections::HashSet::<Status>::new();
+            for project in doc.projects.iter_shared() {
+                for status in project.bind().statuses.iter_shared() {
+                    all_statuses.insert(Status::from(status));
+                }
+            }
+            let mut all_statuses_ordered = all_statuses.into_iter().collect::<Vec<_>>();
+            all_statuses_ordered.sort();
+            for status in all_statuses_ordered {
+                doc.status_order.push(&status.name);
+            }
+            for mut project in doc.projects.iter_shared() {
+                project.bind_mut().statuses = doc.status_order.clone();
+            }
             doc
         })
     }
@@ -122,6 +195,13 @@ impl KanbanDocument {
         let mut children = arena[list_item_ref].children_mut(arena);
         let Some(status_list) = children.find(|&s| matches_kind!(arena, s, List)) else {
             return false;
+        };
+        if let Some(status_ref) = arena[status_list].first_child() {
+            if let KindData::ListItem(status) = arena[status_ref].kind_data() {
+                if status.is_task() {
+                    return false;
+                };
+            };
         };
         let Some(task_list) = Self::get_first_child_list(arena, status_list) else {
             return false;
