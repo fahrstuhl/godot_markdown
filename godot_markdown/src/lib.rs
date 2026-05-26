@@ -52,7 +52,7 @@ impl Cmark {
         let parser = Parser::new_ext(markdown_input, options);
         let mut richtext_output: String = String::with_capacity(markdown_input.len() * 3 / 2);
         push_richtext(&mut richtext_output, parser);
-        GString::from(richtext_output)
+        GString::from(&richtext_output)
     }
 }
 
