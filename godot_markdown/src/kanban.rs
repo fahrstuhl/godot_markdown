@@ -268,11 +268,24 @@ fn paragraph_to_text(para_ref: NodeRef, arena: &Arena, source: &String) -> Optio
         return None;
     }
     let mut ret: String = "".to_owned();
-    arena[para_ref].children(&arena).for_each(|c| {
-        if let KindData::Text(text) = arena[c].kind_data() {
-            ret.push_str(text.str(source));
-        };
-    });
+    let _ = walk(arena, para_ref, &mut |arena: &Arena,
+        node_ref: NodeRef,
+        entering: bool|
+        -> Result<
+        WalkStatus,
+        WalkerError,
+        > {
+            if entering {
+                if let KindData::Text(text) = arena[node_ref].kind_data() {
+                    ret.push_str(text.str(source));
+                    if text.has_qualifiers(TextQualifier::SOFT_LINE_BREAK ) || text.has_qualifiers(TextQualifier::HARD_LINE_BREAK) {
+                        ret.push_str(" ");
+                    }
+                };
+            };
+            Ok(WalkStatus::Continue)
+        });
+
     Some(ret)
 }
 
